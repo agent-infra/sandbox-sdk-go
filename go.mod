@@ -1,6 +1,6 @@
 module github.com/agent-infra/sandbox-sdk-go
 
-go 1.24
+go 1.18
 
 require (
 	github.com/google/uuid v1.4.0
