@@ -15,6 +15,7 @@ import (
 	option "github.com/agent-infra/sandbox-sdk-go/option"
 	sandbox "github.com/agent-infra/sandbox-sdk-go/sandbox"
 	shell "github.com/agent-infra/sandbox-sdk-go/shell"
+	skills "github.com/agent-infra/sandbox-sdk-go/skills"
 	util "github.com/agent-infra/sandbox-sdk-go/util"
 )
 
@@ -29,6 +30,7 @@ type Client struct {
 	Browser         *browser.Client
 	Code            *code.Client
 	Util            *util.Client
+	Skills          *skills.Client
 
 	options *core.RequestOptions
 	baseURL string
@@ -47,6 +49,7 @@ func NewClient(opts ...option.RequestOption) *Client {
 		Browser:         browser.NewClient(options),
 		Code:            code.NewClient(options),
 		Util:            util.NewClient(options),
+		Skills:          skills.NewClient(options),
 		WithRawResponse: NewRawClient(options),
 		options:         options,
 		baseURL:         options.BaseURL,

@@ -137,6 +137,23 @@ func (c *Client) CreateSession(
 	return response.Body, nil
 }
 
+// Update shell session configuration (e.g., no_change_timeout)
+func (c *Client) UpdateSession(
+	ctx context.Context,
+	request *sandboxsdkgo.ShellUpdateSessionRequest,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.Response, error) {
+	response, err := c.WithRawResponse.UpdateSession(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
 // Create a new shell session and return the terminal URL
 func (c *Client) GetTerminalUrl(
 	ctx context.Context,

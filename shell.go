@@ -11,8 +11,10 @@ import (
 )
 
 var (
-	shellCreateSessionRequestFieldId      = big.NewInt(1 << 0)
-	shellCreateSessionRequestFieldExecDir = big.NewInt(1 << 1)
+	shellCreateSessionRequestFieldId               = big.NewInt(1 << 0)
+	shellCreateSessionRequestFieldExecDir          = big.NewInt(1 << 1)
+	shellCreateSessionRequestFieldNoChangeTimeout  = big.NewInt(1 << 2)
+	shellCreateSessionRequestFieldPreserveSymlinks = big.NewInt(1 << 3)
 )
 
 type ShellCreateSessionRequest struct {
@@ -20,6 +22,10 @@ type ShellCreateSessionRequest struct {
 	Id *string `json:"id,omitempty" url:"-"`
 	// Working directory for the new session (must use absolute path)
 	ExecDir *string `json:"exec_dir,omitempty" url:"-"`
+	// Timeout (seconds) for detecting no new output from commands in this session. Default is 120 seconds. If no output change is detected within this time, command returns with NO_CHANGE_TIMEOUT status.
+	NoChangeTimeout *int `json:"no_change_timeout,omitempty" url:"-"`
+	// If True, preserve symlinks in working directory path (pwd shows symlink path). If False, symlinks are resolved to physical paths. Defaults to False for backward compatibility.
+	PreserveSymlinks *bool `json:"preserve_symlinks,omitempty" url:"-"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -46,11 +52,29 @@ func (s *ShellCreateSessionRequest) SetExecDir(execDir *string) {
 	s.require(shellCreateSessionRequestFieldExecDir)
 }
 
+// SetNoChangeTimeout sets the NoChangeTimeout field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellCreateSessionRequest) SetNoChangeTimeout(noChangeTimeout *int) {
+	s.NoChangeTimeout = noChangeTimeout
+	s.require(shellCreateSessionRequestFieldNoChangeTimeout)
+}
+
+// SetPreserveSymlinks sets the PreserveSymlinks field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellCreateSessionRequest) SetPreserveSymlinks(preserveSymlinks *bool) {
+	s.PreserveSymlinks = preserveSymlinks
+	s.require(shellCreateSessionRequestFieldPreserveSymlinks)
+}
+
 var (
-	shellExecRequestFieldId        = big.NewInt(1 << 0)
-	shellExecRequestFieldExecDir   = big.NewInt(1 << 1)
-	shellExecRequestFieldCommand   = big.NewInt(1 << 2)
-	shellExecRequestFieldAsyncMode = big.NewInt(1 << 3)
+	shellExecRequestFieldId               = big.NewInt(1 << 0)
+	shellExecRequestFieldExecDir          = big.NewInt(1 << 1)
+	shellExecRequestFieldCommand          = big.NewInt(1 << 2)
+	shellExecRequestFieldAsyncMode        = big.NewInt(1 << 3)
+	shellExecRequestFieldTimeout          = big.NewInt(1 << 4)
+	shellExecRequestFieldStrict           = big.NewInt(1 << 5)
+	shellExecRequestFieldNoChangeTimeout  = big.NewInt(1 << 6)
+	shellExecRequestFieldPreserveSymlinks = big.NewInt(1 << 7)
 )
 
 type ShellExecRequest struct {
@@ -62,6 +86,14 @@ type ShellExecRequest struct {
 	Command string `json:"command" url:"-"`
 	// Whether to execute command asynchronously (default: False for async, False for synchronous execution)
 	AsyncMode *bool `json:"async_mode,omitempty" url:"-"`
+	// Maximum time (seconds) to wait for command completion before returning running status
+	Timeout *float64 `json:"timeout,omitempty" url:"-"`
+	// Strict mode for working directory validation. If True, returns error when working directory does not exist. If False or None, silently falls back to session working directory.
+	Strict *bool `json:"strict,omitempty" url:"-"`
+	// Timeout (seconds) for detecting no new output from a command. If no output change is detected within this time, command returns with NO_CHANGE_TIMEOUT status. Overrides session-level setting for this command only.
+	NoChangeTimeout *int `json:"no_change_timeout,omitempty" url:"-"`
+	// If True, preserve symlinks in working directory path (pwd shows symlink path). If False, symlinks are resolved to physical paths. Defaults to False for backward compatibility.
+	PreserveSymlinks *bool `json:"preserve_symlinks,omitempty" url:"-"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -100,6 +132,34 @@ func (s *ShellExecRequest) SetCommand(command string) {
 func (s *ShellExecRequest) SetAsyncMode(asyncMode *bool) {
 	s.AsyncMode = asyncMode
 	s.require(shellExecRequestFieldAsyncMode)
+}
+
+// SetTimeout sets the Timeout field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellExecRequest) SetTimeout(timeout *float64) {
+	s.Timeout = timeout
+	s.require(shellExecRequestFieldTimeout)
+}
+
+// SetStrict sets the Strict field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellExecRequest) SetStrict(strict *bool) {
+	s.Strict = strict
+	s.require(shellExecRequestFieldStrict)
+}
+
+// SetNoChangeTimeout sets the NoChangeTimeout field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellExecRequest) SetNoChangeTimeout(noChangeTimeout *int) {
+	s.NoChangeTimeout = noChangeTimeout
+	s.require(shellExecRequestFieldNoChangeTimeout)
+}
+
+// SetPreserveSymlinks sets the PreserveSymlinks field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellExecRequest) SetPreserveSymlinks(preserveSymlinks *bool) {
+	s.PreserveSymlinks = preserveSymlinks
+	s.require(shellExecRequestFieldPreserveSymlinks)
 }
 
 var (
@@ -2120,6 +2180,42 @@ func (s *ShellWriteResult) String() string {
 }
 
 var (
+	shellUpdateSessionRequestFieldId              = big.NewInt(1 << 0)
+	shellUpdateSessionRequestFieldNoChangeTimeout = big.NewInt(1 << 1)
+)
+
+type ShellUpdateSessionRequest struct {
+	// Unique identifier of the target shell session
+	Id string `json:"id" url:"-"`
+	// New timeout (seconds) for detecting no new output from commands. If no output change is detected within this time, command returns with NO_CHANGE_TIMEOUT status.
+	NoChangeTimeout *int `json:"no_change_timeout,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (s *ShellUpdateSessionRequest) require(field *big.Int) {
+	if s.explicitFields == nil {
+		s.explicitFields = big.NewInt(0)
+	}
+	s.explicitFields.Or(s.explicitFields, field)
+}
+
+// SetId sets the Id field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellUpdateSessionRequest) SetId(id string) {
+	s.Id = id
+	s.require(shellUpdateSessionRequestFieldId)
+}
+
+// SetNoChangeTimeout sets the NoChangeTimeout field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellUpdateSessionRequest) SetNoChangeTimeout(noChangeTimeout *int) {
+	s.NoChangeTimeout = noChangeTimeout
+	s.require(shellUpdateSessionRequestFieldNoChangeTimeout)
+}
+
+var (
 	shellViewRequestFieldId = big.NewInt(1 << 0)
 )
 
@@ -2146,8 +2242,9 @@ func (s *ShellViewRequest) SetId(id string) {
 }
 
 var (
-	shellWaitRequestFieldId      = big.NewInt(1 << 0)
-	shellWaitRequestFieldSeconds = big.NewInt(1 << 1)
+	shellWaitRequestFieldId             = big.NewInt(1 << 0)
+	shellWaitRequestFieldSeconds        = big.NewInt(1 << 1)
+	shellWaitRequestFieldMaxWaitSeconds = big.NewInt(1 << 2)
 )
 
 type ShellWaitRequest struct {
@@ -2155,6 +2252,8 @@ type ShellWaitRequest struct {
 	Id string `json:"id" url:"-"`
 	// Wait time (seconds)
 	Seconds *int `json:"seconds,omitempty" url:"-"`
+	// Maximum wait time (seconds) for the command to complete
+	MaxWaitSeconds *int `json:"max_wait_seconds,omitempty" url:"-"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -2179,6 +2278,13 @@ func (s *ShellWaitRequest) SetId(id string) {
 func (s *ShellWaitRequest) SetSeconds(seconds *int) {
 	s.Seconds = seconds
 	s.require(shellWaitRequestFieldSeconds)
+}
+
+// SetMaxWaitSeconds sets the MaxWaitSeconds field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellWaitRequest) SetMaxWaitSeconds(maxWaitSeconds *int) {
+	s.MaxWaitSeconds = maxWaitSeconds
+	s.require(shellWaitRequestFieldMaxWaitSeconds)
 }
 
 var (

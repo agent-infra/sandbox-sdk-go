@@ -233,3 +233,46 @@ func (r *RawClient) DeleteSession(
 		Body:       response,
 	}, nil
 }
+
+func (r *RawClient) CreateSession(
+	ctx context.Context,
+	request *sandboxsdkgo.JupyterCreateSessionRequest,
+	opts ...option.RequestOption,
+) (*core.Response[*sandboxsdkgo.ResponseJupyterCreateSessionResponse], error) {
+	options := core.NewRequestOptions(opts...)
+	baseURL := internal.ResolveBaseURL(
+		options.BaseURL,
+		r.baseURL,
+		"",
+	)
+	endpointURL := baseURL + "/v1/jupyter/sessions/create"
+	headers := internal.MergeHeaders(
+		r.options.ToHeader(),
+		options.ToHeader(),
+	)
+	headers.Add("Content-Type", "application/json")
+	var response *sandboxsdkgo.ResponseJupyterCreateSessionResponse
+	raw, err := r.caller.Call(
+		ctx,
+		&internal.CallParams{
+			URL:             endpointURL,
+			Method:          http.MethodPost,
+			Headers:         headers,
+			MaxAttempts:     options.MaxAttempts,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Request:         request,
+			Response:        &response,
+			ErrorDecoder:    internal.NewErrorDecoder(sandboxsdkgo.ErrorCodes),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &core.Response[*sandboxsdkgo.ResponseJupyterCreateSessionResponse]{
+		StatusCode: raw.StatusCode,
+		Header:     raw.Header,
+		Body:       response,
+	}, nil
+}

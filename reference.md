@@ -246,6 +246,38 @@ client.Shell.ExecCommand(
     
 </dd>
 </dl>
+
+<dl>
+<dd>
+
+**timeout:** `*float64` — Maximum time (seconds) to wait for command completion before returning running status
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**strict:** `*bool` — Strict mode for working directory validation. If True, returns error when working directory does not exist. If False or None, silently falls back to session working directory.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**noChangeTimeout:** `*int` — Timeout (seconds) for detecting no new output from a command. If no output change is detected within this time, command returns with NO_CHANGE_TIMEOUT status. Overrides session-level setting for this command only.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**preserveSymlinks:** `*bool` — If True, preserve symlinks in working directory path (pwd shows symlink path). If False, symlinks are resolved to physical paths. Defaults to False for backward compatibility.
+    
+</dd>
+</dl>
 </dd>
 </dl>
 
@@ -372,6 +404,14 @@ client.Shell.WaitForProcess(
 <dd>
 
 **seconds:** `*int` — Wait time (seconds)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**maxWaitSeconds:** `*int` — Maximum wait time (seconds) for the command to complete
     
 </dd>
 </dl>
@@ -577,6 +617,90 @@ client.Shell.CreateSession(
 <dd>
 
 **execDir:** `*string` — Working directory for the new session (must use absolute path)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**noChangeTimeout:** `*int` — Timeout (seconds) for detecting no new output from commands in this session. Default is 120 seconds. If no output change is detected within this time, command returns with NO_CHANGE_TIMEOUT status.
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**preserveSymlinks:** `*bool` — If True, preserve symlinks in working directory path (pwd shows symlink path). If False, symlinks are resolved to physical paths. Defaults to False for backward compatibility.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Shell.UpdateSession(request) -> *sandboxsdkgo.Response</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Update shell session configuration (e.g., no_change_timeout)
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Shell.UpdateSession(
+        context.TODO(),
+        &sandboxsdkgo.ShellUpdateSessionRequest{
+            Id: "id",
+        },
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**id:** `string` — Unique identifier of the target shell session
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**noChangeTimeout:** `*int` — New timeout (seconds) for detecting no new output from commands. If no output change is detected within this time, command returns with NO_CHANGE_TIMEOUT status.
     
 </dd>
 </dl>
@@ -1247,7 +1371,7 @@ client.File.UploadFile(
 </dl>
 </details>
 
-<details><summary><code>client.File.DownloadFile() -> any</code></summary>
+<details><summary><code>client.File.DownloadFile() -> string</code></summary>
 <dl>
 <dd>
 
@@ -1537,6 +1661,14 @@ client.File.StrReplaceEditor(
     
 </dd>
 </dl>
+
+<dl>
+<dd>
+
+**replaceMode:** `*sandboxsdkgo.StrReplaceEditorRequestReplaceMode` — Optional parameter of `str_replace` command. When specified, controls how multiple occurrences are handled: 'ALL' replaces all occurrences, 'FIRST' replaces only the first, 'LAST' replaces only the last. If not specified, requires unique match (original behavior).
+    
+</dd>
+</dl>
 </dd>
 </dl>
 
@@ -1615,7 +1747,7 @@ client.Jupyter.ExecuteCode(
 <dl>
 <dd>
 
-**kernelName:** `*string` — Kernel name to use (e.g., 'python3', 'python3.11'). Defaults to 'python3'
+**kernelName:** `*string` — Kernel name to use (e.g., 'python3', 'python3.11', 'python3.12'). Defaults to 'python3'
     
 </dd>
 </dl>
@@ -1624,6 +1756,14 @@ client.Jupyter.ExecuteCode(
 <dd>
 
 **sessionId:** `*string` — Session ID to maintain kernel state across requests
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**cwd:** `*string` — Current working directory for the kernel
     
 </dd>
 </dl>
@@ -1819,6 +1959,80 @@ client.Jupyter.DeleteSession(
 </dl>
 </details>
 
+<details><summary><code>client.Jupyter.CreateSession(request) -> *sandboxsdkgo.ResponseJupyterCreateSessionResponse</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Create a new Jupyter session
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Jupyter.CreateSession(
+        context.TODO(),
+        &sandboxsdkgo.JupyterCreateSessionRequest{},
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**sessionId:** `*string` — Unique identifier for the session, auto-generated if not provided
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**kernelName:** `*string` — Kernel name to use (e.g., 'python3', 'python3.11', 'python3.12'). Defaults to 'python3'
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**cwd:** `*string` — Current working directory for the session
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 ## Nodejs
 <details><summary><code>client.Nodejs.ExecuteCode(request) -> *sandboxsdkgo.ResponseNodeJsExecuteResponse</code></summary>
 <dl>
@@ -1950,7 +2164,7 @@ client.Nodejs.GetInfo(
 </details>
 
 ## Mcp
-<details><summary><code>client.Mcp.ListMcpTools(ServerName) -> *sandboxsdkgo.ResponseListToolsResult</code></summary>
+<details><summary><code>client.Mcp.ListMcpTools(ServerName) -> *sandboxsdkgo.ResponseListToolsResultModel</code></summary>
 <dl>
 <dd>
 
@@ -2014,7 +2228,7 @@ client.Mcp.ListMcpTools(
 </dl>
 </details>
 
-<details><summary><code>client.Mcp.ExecuteMcpTool(ServerName, ToolName, request) -> *sandboxsdkgo.ResponseCallToolResult</code></summary>
+<details><summary><code>client.Mcp.ExecuteMcpTool(ServerName, ToolName, request) -> *sandboxsdkgo.ResponseCallToolResultModel</code></summary>
 <dl>
 <dd>
 
@@ -2251,6 +2465,64 @@ client.Browser.ExecuteAction(
 </dl>
 </details>
 
+<details><summary><code>client.Browser.SetConfig(request) -> *sandboxsdkgo.Response</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Execute a validated action on the current display.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Browser.SetConfig(
+        context.TODO(),
+        &sandboxsdkgo.BrowserConfigRequest{},
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**resolution:** `*sandboxsdkgo.Resolution` — The desired screen resolution, allowed values are: 1920x1080, 640x480, 1360x768, 1280x720, 800x600, 1024x768, 1280x800, 1920x1200, 1280x960, 1400x1050, 1680x1050, 1280x1024, 1600x1200.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 ## Code
 <details><summary><code>client.Code.ExecuteCode(request) -> *sandboxsdkgo.ResponseCodeExecuteResponse</code></summary>
 <dl>
@@ -2318,6 +2590,14 @@ client.Code.ExecuteCode(
 <dd>
 
 **timeout:** `*int` — Execution timeout in seconds
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**cwd:** `*string` — Current working directory for code execution
     
 </dd>
 </dl>
@@ -2421,6 +2701,203 @@ client.Util.ConvertToMarkdown(
 <dd>
 
 **uri:** `string` — The URI of the resource to convert
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+## Skills
+<details><summary><code>client.Skills.RegisterSkills(request) -> *sandboxsdkgo.ResponseSkillRegistrationResult</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Skills.RegisterSkills(
+        context.TODO(),
+        strings.NewReader(
+            "",
+        ),
+        &sandboxsdkgo.BodyRegisterSkills{},
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Skills.ListMetadata() -> *sandboxsdkgo.ResponseSkillMetadataCollection</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Skills.ListMetadata(
+        context.TODO(),
+        &sandboxsdkgo.SkillsListMetadataRequest{
+            Names: sandboxsdkgo.String(
+                "names",
+            ),
+        },
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**names:** `*string` 
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Skills.ClearSkills() -> *sandboxsdkgo.ResponseDict</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Skills.ClearSkills(
+        context.TODO(),
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Skills.DeleteSkill(Name) -> *sandboxsdkgo.ResponseSkillMetadata</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Skills.DeleteSkill(
+        context.TODO(),
+        "name",
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**name:** `string` 
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Skills.GetContent(Name) -> *sandboxsdkgo.ResponseSkillContentResult</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Skills.GetContent(
+        context.TODO(),
+        "name",
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**name:** `string` 
     
 </dd>
 </dl>

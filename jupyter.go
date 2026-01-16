@@ -10,10 +10,57 @@ import (
 )
 
 var (
+	jupyterCreateSessionRequestFieldSessionId  = big.NewInt(1 << 0)
+	jupyterCreateSessionRequestFieldKernelName = big.NewInt(1 << 1)
+	jupyterCreateSessionRequestFieldCwd        = big.NewInt(1 << 2)
+)
+
+type JupyterCreateSessionRequest struct {
+	// Unique identifier for the session, auto-generated if not provided
+	SessionId *string `json:"session_id,omitempty" url:"-"`
+	// Kernel name to use (e.g., 'python3', 'python3.11', 'python3.12'). Defaults to 'python3'
+	KernelName *string `json:"kernel_name,omitempty" url:"-"`
+	// Current working directory for the session
+	Cwd *string `json:"cwd,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (j *JupyterCreateSessionRequest) require(field *big.Int) {
+	if j.explicitFields == nil {
+		j.explicitFields = big.NewInt(0)
+	}
+	j.explicitFields.Or(j.explicitFields, field)
+}
+
+// SetSessionId sets the SessionId field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (j *JupyterCreateSessionRequest) SetSessionId(sessionId *string) {
+	j.SessionId = sessionId
+	j.require(jupyterCreateSessionRequestFieldSessionId)
+}
+
+// SetKernelName sets the KernelName field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (j *JupyterCreateSessionRequest) SetKernelName(kernelName *string) {
+	j.KernelName = kernelName
+	j.require(jupyterCreateSessionRequestFieldKernelName)
+}
+
+// SetCwd sets the Cwd field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (j *JupyterCreateSessionRequest) SetCwd(cwd *string) {
+	j.Cwd = cwd
+	j.require(jupyterCreateSessionRequestFieldCwd)
+}
+
+var (
 	jupyterExecuteRequestFieldCode       = big.NewInt(1 << 0)
 	jupyterExecuteRequestFieldTimeout    = big.NewInt(1 << 1)
 	jupyterExecuteRequestFieldKernelName = big.NewInt(1 << 2)
 	jupyterExecuteRequestFieldSessionId  = big.NewInt(1 << 3)
+	jupyterExecuteRequestFieldCwd        = big.NewInt(1 << 4)
 )
 
 type JupyterExecuteRequest struct {
@@ -21,10 +68,12 @@ type JupyterExecuteRequest struct {
 	Code string `json:"code" url:"-"`
 	// Execution timeout in seconds
 	Timeout *int `json:"timeout,omitempty" url:"-"`
-	// Kernel name to use (e.g., 'python3', 'python3.11'). Defaults to 'python3'
+	// Kernel name to use (e.g., 'python3', 'python3.11', 'python3.12'). Defaults to 'python3'
 	KernelName *string `json:"kernel_name,omitempty" url:"-"`
 	// Session ID to maintain kernel state across requests
 	SessionId *string `json:"session_id,omitempty" url:"-"`
+	// Current working directory for the kernel
+	Cwd *string `json:"cwd,omitempty" url:"-"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -63,6 +112,13 @@ func (j *JupyterExecuteRequest) SetKernelName(kernelName *string) {
 func (j *JupyterExecuteRequest) SetSessionId(sessionId *string) {
 	j.SessionId = sessionId
 	j.require(jupyterExecuteRequestFieldSessionId)
+}
+
+// SetCwd sets the Cwd field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (j *JupyterExecuteRequest) SetCwd(cwd *string) {
+	j.Cwd = cwd
+	j.require(jupyterExecuteRequestFieldCwd)
 }
 
 // Active sessions result
@@ -143,6 +199,120 @@ func (a *ActiveSessionsResult) String() string {
 		return value
 	}
 	return fmt.Sprintf("%#v", a)
+}
+
+// Jupyter session creation response model
+var (
+	jupyterCreateSessionResponseFieldSessionId  = big.NewInt(1 << 0)
+	jupyterCreateSessionResponseFieldKernelName = big.NewInt(1 << 1)
+	jupyterCreateSessionResponseFieldMessage    = big.NewInt(1 << 2)
+)
+
+type JupyterCreateSessionResponse struct {
+	// Unique identifier of the created session
+	SessionId string `json:"session_id" url:"session_id"`
+	// Name of the kernel associated with the session
+	KernelName string `json:"kernel_name" url:"kernel_name"`
+	// Status message about session creation
+	Message string `json:"message" url:"message"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (j *JupyterCreateSessionResponse) GetSessionId() string {
+	if j == nil {
+		return ""
+	}
+	return j.SessionId
+}
+
+func (j *JupyterCreateSessionResponse) GetKernelName() string {
+	if j == nil {
+		return ""
+	}
+	return j.KernelName
+}
+
+func (j *JupyterCreateSessionResponse) GetMessage() string {
+	if j == nil {
+		return ""
+	}
+	return j.Message
+}
+
+func (j *JupyterCreateSessionResponse) GetExtraProperties() map[string]interface{} {
+	return j.extraProperties
+}
+
+func (j *JupyterCreateSessionResponse) require(field *big.Int) {
+	if j.explicitFields == nil {
+		j.explicitFields = big.NewInt(0)
+	}
+	j.explicitFields.Or(j.explicitFields, field)
+}
+
+// SetSessionId sets the SessionId field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (j *JupyterCreateSessionResponse) SetSessionId(sessionId string) {
+	j.SessionId = sessionId
+	j.require(jupyterCreateSessionResponseFieldSessionId)
+}
+
+// SetKernelName sets the KernelName field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (j *JupyterCreateSessionResponse) SetKernelName(kernelName string) {
+	j.KernelName = kernelName
+	j.require(jupyterCreateSessionResponseFieldKernelName)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (j *JupyterCreateSessionResponse) SetMessage(message string) {
+	j.Message = message
+	j.require(jupyterCreateSessionResponseFieldMessage)
+}
+
+func (j *JupyterCreateSessionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler JupyterCreateSessionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*j = JupyterCreateSessionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *j)
+	if err != nil {
+		return err
+	}
+	j.extraProperties = extraProperties
+	j.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (j *JupyterCreateSessionResponse) MarshalJSON() ([]byte, error) {
+	type embed JupyterCreateSessionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*j),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, j.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (j *JupyterCreateSessionResponse) String() string {
+	if len(j.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(j.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(j); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", j)
 }
 
 // Jupyter code execution response model
@@ -827,6 +997,119 @@ func (r *ResponseActiveSessionsResult) MarshalJSON() ([]byte, error) {
 }
 
 func (r *ResponseActiveSessionsResult) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseJupyterCreateSessionResponseFieldSuccess = big.NewInt(1 << 0)
+	responseJupyterCreateSessionResponseFieldMessage = big.NewInt(1 << 1)
+	responseJupyterCreateSessionResponseFieldData    = big.NewInt(1 << 2)
+)
+
+type ResponseJupyterCreateSessionResponse struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *JupyterCreateSessionResponse `json:"data,omitempty" url:"data,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseJupyterCreateSessionResponse) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseJupyterCreateSessionResponse) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseJupyterCreateSessionResponse) GetData() *JupyterCreateSessionResponse {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseJupyterCreateSessionResponse) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseJupyterCreateSessionResponse) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseJupyterCreateSessionResponse) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseJupyterCreateSessionResponseFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseJupyterCreateSessionResponse) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseJupyterCreateSessionResponseFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseJupyterCreateSessionResponse) SetData(data *JupyterCreateSessionResponse) {
+	r.Data = data
+	r.require(responseJupyterCreateSessionResponseFieldData)
+}
+
+func (r *ResponseJupyterCreateSessionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseJupyterCreateSessionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseJupyterCreateSessionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseJupyterCreateSessionResponse) MarshalJSON() ([]byte, error) {
+	type embed ResponseJupyterCreateSessionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseJupyterCreateSessionResponse) String() string {
 	if len(r.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
 			return value

@@ -3,11 +3,13 @@
 package file
 
 import (
+	bytes "bytes"
 	context "context"
 	sandboxsdkgo "github.com/agent-infra/sandbox-sdk-go"
 	core "github.com/agent-infra/sandbox-sdk-go/core"
 	internal "github.com/agent-infra/sandbox-sdk-go/internal"
 	option "github.com/agent-infra/sandbox-sdk-go/option"
+	io "io"
 	http "net/http"
 )
 
@@ -305,7 +307,7 @@ func (r *RawClient) DownloadFile(
 	ctx context.Context,
 	request *sandboxsdkgo.FileDownloadFileRequest,
 	opts ...option.RequestOption,
-) (*core.Response[any], error) {
+) (*core.Response[io.Reader], error) {
 	options := core.NewRequestOptions(opts...)
 	baseURL := internal.ResolveBaseURL(
 		options.BaseURL,
@@ -324,7 +326,7 @@ func (r *RawClient) DownloadFile(
 		r.options.ToHeader(),
 		options.ToHeader(),
 	)
-	var response any
+	response := bytes.NewBuffer(nil)
 	raw, err := r.caller.Call(
 		ctx,
 		&internal.CallParams{
@@ -335,14 +337,14 @@ func (r *RawClient) DownloadFile(
 			BodyProperties:  options.BodyProperties,
 			QueryParameters: options.QueryParameters,
 			Client:          options.HTTPClient,
-			Response:        &response,
+			Response:        response,
 			ErrorDecoder:    internal.NewErrorDecoder(sandboxsdkgo.ErrorCodes),
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
-	return &core.Response[any]{
+	return &core.Response[io.Reader]{
 		StatusCode: raw.StatusCode,
 		Header:     raw.Header,
 		Body:       response,

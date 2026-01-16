@@ -35,7 +35,7 @@ func (r *RawClient) ListMcpTools(
 	// Name of the MCP server
 	serverName string,
 	opts ...option.RequestOption,
-) (*core.Response[*sandboxsdkgo.ResponseListToolsResult], error) {
+) (*core.Response[*sandboxsdkgo.ResponseListToolsResultModel], error) {
 	options := core.NewRequestOptions(opts...)
 	baseURL := internal.ResolveBaseURL(
 		options.BaseURL,
@@ -50,7 +50,7 @@ func (r *RawClient) ListMcpTools(
 		r.options.ToHeader(),
 		options.ToHeader(),
 	)
-	var response *sandboxsdkgo.ResponseListToolsResult
+	var response *sandboxsdkgo.ResponseListToolsResultModel
 	raw, err := r.caller.Call(
 		ctx,
 		&internal.CallParams{
@@ -68,7 +68,7 @@ func (r *RawClient) ListMcpTools(
 	if err != nil {
 		return nil, err
 	}
-	return &core.Response[*sandboxsdkgo.ResponseListToolsResult]{
+	return &core.Response[*sandboxsdkgo.ResponseListToolsResultModel]{
 		StatusCode: raw.StatusCode,
 		Header:     raw.Header,
 		Body:       response,
@@ -83,7 +83,7 @@ func (r *RawClient) ExecuteMcpTool(
 	toolName string,
 	request map[string]any,
 	opts ...option.RequestOption,
-) (*core.Response[*sandboxsdkgo.ResponseCallToolResult], error) {
+) (*core.Response[*sandboxsdkgo.ResponseCallToolResultModel], error) {
 	options := core.NewRequestOptions(opts...)
 	baseURL := internal.ResolveBaseURL(
 		options.BaseURL,
@@ -99,7 +99,7 @@ func (r *RawClient) ExecuteMcpTool(
 		r.options.ToHeader(),
 		options.ToHeader(),
 	)
-	var response *sandboxsdkgo.ResponseCallToolResult
+	var response *sandboxsdkgo.ResponseCallToolResultModel
 	raw, err := r.caller.Call(
 		ctx,
 		&internal.CallParams{
@@ -118,7 +118,7 @@ func (r *RawClient) ExecuteMcpTool(
 	if err != nil {
 		return nil, err
 	}
-	return &core.Response[*sandboxsdkgo.ResponseCallToolResult]{
+	return &core.Response[*sandboxsdkgo.ResponseCallToolResultModel]{
 		StatusCode: raw.StatusCode,
 		Header:     raw.Header,
 		Body:       response,

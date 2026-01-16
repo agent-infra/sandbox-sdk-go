@@ -13,6 +13,7 @@ var (
 	codeExecuteRequestFieldLanguage = big.NewInt(1 << 0)
 	codeExecuteRequestFieldCode     = big.NewInt(1 << 1)
 	codeExecuteRequestFieldTimeout  = big.NewInt(1 << 2)
+	codeExecuteRequestFieldCwd      = big.NewInt(1 << 3)
 )
 
 type CodeExecuteRequest struct {
@@ -22,6 +23,8 @@ type CodeExecuteRequest struct {
 	Code string `json:"code" url:"-"`
 	// Execution timeout in seconds
 	Timeout *int `json:"timeout,omitempty" url:"-"`
+	// Current working directory for code execution
+	Cwd *string `json:"cwd,omitempty" url:"-"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -55,15 +58,23 @@ func (c *CodeExecuteRequest) SetTimeout(timeout *int) {
 	c.require(codeExecuteRequestFieldTimeout)
 }
 
+// SetCwd sets the Cwd field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (c *CodeExecuteRequest) SetCwd(cwd *string) {
+	c.Cwd = cwd
+	c.require(codeExecuteRequestFieldCwd)
+}
+
 // Unified code execution response model
 var (
-	codeExecuteResponseFieldLanguage = big.NewInt(1 << 0)
-	codeExecuteResponseFieldStatus   = big.NewInt(1 << 1)
-	codeExecuteResponseFieldOutputs  = big.NewInt(1 << 2)
-	codeExecuteResponseFieldCode     = big.NewInt(1 << 3)
-	codeExecuteResponseFieldStdout   = big.NewInt(1 << 4)
-	codeExecuteResponseFieldStderr   = big.NewInt(1 << 5)
-	codeExecuteResponseFieldExitCode = big.NewInt(1 << 6)
+	codeExecuteResponseFieldLanguage  = big.NewInt(1 << 0)
+	codeExecuteResponseFieldStatus    = big.NewInt(1 << 1)
+	codeExecuteResponseFieldOutputs   = big.NewInt(1 << 2)
+	codeExecuteResponseFieldCode      = big.NewInt(1 << 3)
+	codeExecuteResponseFieldStdout    = big.NewInt(1 << 4)
+	codeExecuteResponseFieldStderr    = big.NewInt(1 << 5)
+	codeExecuteResponseFieldExitCode  = big.NewInt(1 << 6)
+	codeExecuteResponseFieldTraceback = big.NewInt(1 << 7)
 )
 
 type CodeExecuteResponse struct {
@@ -81,6 +92,8 @@ type CodeExecuteResponse struct {
 	Stderr *string `json:"stderr,omitempty" url:"stderr,omitempty"`
 	// Process exit code when applicable
 	ExitCode *int `json:"exit_code,omitempty" url:"exit_code,omitempty"`
+	// Captured error traceback lines when available
+	Traceback []string `json:"traceback,omitempty" url:"traceback,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -136,6 +149,13 @@ func (c *CodeExecuteResponse) GetExitCode() *int {
 		return nil
 	}
 	return c.ExitCode
+}
+
+func (c *CodeExecuteResponse) GetTraceback() []string {
+	if c == nil {
+		return nil
+	}
+	return c.Traceback
 }
 
 func (c *CodeExecuteResponse) GetExtraProperties() map[string]interface{} {
@@ -196,6 +216,13 @@ func (c *CodeExecuteResponse) SetStderr(stderr *string) {
 func (c *CodeExecuteResponse) SetExitCode(exitCode *int) {
 	c.ExitCode = exitCode
 	c.require(codeExecuteResponseFieldExitCode)
+}
+
+// SetTraceback sets the Traceback field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (c *CodeExecuteResponse) SetTraceback(traceback []string) {
+	c.Traceback = traceback
+	c.require(codeExecuteResponseFieldTraceback)
 }
 
 func (c *CodeExecuteResponse) UnmarshalJSON(data []byte) error {
