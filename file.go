@@ -336,13 +336,14 @@ func (f *FileSearchRequest) SetSudo(sudo *bool) {
 }
 
 var (
-	strReplaceEditorRequestFieldCommand    = big.NewInt(1 << 0)
-	strReplaceEditorRequestFieldPath       = big.NewInt(1 << 1)
-	strReplaceEditorRequestFieldFileText   = big.NewInt(1 << 2)
-	strReplaceEditorRequestFieldOldStr     = big.NewInt(1 << 3)
-	strReplaceEditorRequestFieldNewStr     = big.NewInt(1 << 4)
-	strReplaceEditorRequestFieldInsertLine = big.NewInt(1 << 5)
-	strReplaceEditorRequestFieldViewRange  = big.NewInt(1 << 6)
+	strReplaceEditorRequestFieldCommand     = big.NewInt(1 << 0)
+	strReplaceEditorRequestFieldPath        = big.NewInt(1 << 1)
+	strReplaceEditorRequestFieldFileText    = big.NewInt(1 << 2)
+	strReplaceEditorRequestFieldOldStr      = big.NewInt(1 << 3)
+	strReplaceEditorRequestFieldNewStr      = big.NewInt(1 << 4)
+	strReplaceEditorRequestFieldInsertLine  = big.NewInt(1 << 5)
+	strReplaceEditorRequestFieldViewRange   = big.NewInt(1 << 6)
+	strReplaceEditorRequestFieldReplaceMode = big.NewInt(1 << 7)
 )
 
 type StrReplaceEditorRequest struct {
@@ -360,6 +361,8 @@ type StrReplaceEditorRequest struct {
 	InsertLine *int `json:"insert_line,omitempty" url:"-"`
 	// Optional parameter of `view` command when `path` points to a file. If none is given, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file.
 	ViewRange []int `json:"view_range,omitempty" url:"-"`
+	// Optional parameter of `str_replace` command. When specified, controls how multiple occurrences are handled: 'ALL' replaces all occurrences, 'FIRST' replaces only the first, 'LAST' replaces only the last. If not specified, requires unique match (original behavior).
+	ReplaceMode *StrReplaceEditorRequestReplaceMode `json:"replace_mode,omitempty" url:"-"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -419,6 +422,13 @@ func (s *StrReplaceEditorRequest) SetInsertLine(insertLine *int) {
 func (s *StrReplaceEditorRequest) SetViewRange(viewRange []int) {
 	s.ViewRange = viewRange
 	s.require(strReplaceEditorRequestFieldViewRange)
+}
+
+// SetReplaceMode sets the ReplaceMode field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *StrReplaceEditorRequest) SetReplaceMode(replaceMode *StrReplaceEditorRequestReplaceMode) {
+	s.ReplaceMode = replaceMode
+	s.require(strReplaceEditorRequestFieldReplaceMode)
 }
 
 // File content encoding type
@@ -2492,6 +2502,31 @@ func NewCommandFromString(s string) (Command, error) {
 
 func (c Command) Ptr() *Command {
 	return &c
+}
+
+type StrReplaceEditorRequestReplaceMode string
+
+const (
+	StrReplaceEditorRequestReplaceModeAll   StrReplaceEditorRequestReplaceMode = "ALL"
+	StrReplaceEditorRequestReplaceModeFirst StrReplaceEditorRequestReplaceMode = "FIRST"
+	StrReplaceEditorRequestReplaceModeLast  StrReplaceEditorRequestReplaceMode = "LAST"
+)
+
+func NewStrReplaceEditorRequestReplaceModeFromString(s string) (StrReplaceEditorRequestReplaceMode, error) {
+	switch s {
+	case "ALL":
+		return StrReplaceEditorRequestReplaceModeAll, nil
+	case "FIRST":
+		return StrReplaceEditorRequestReplaceModeFirst, nil
+	case "LAST":
+		return StrReplaceEditorRequestReplaceModeLast, nil
+	}
+	var t StrReplaceEditorRequestReplaceMode
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (s StrReplaceEditorRequestReplaceMode) Ptr() *StrReplaceEditorRequestReplaceMode {
+	return &s
 }
 
 type BodyUploadFile struct {

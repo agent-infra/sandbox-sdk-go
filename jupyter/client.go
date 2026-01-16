@@ -115,3 +115,20 @@ func (c *Client) DeleteSession(
 	}
 	return response.Body, nil
 }
+
+// Create a new Jupyter session
+func (c *Client) CreateSession(
+	ctx context.Context,
+	request *sandboxsdkgo.JupyterCreateSessionRequest,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseJupyterCreateSessionResponse, error) {
+	response, err := c.WithRawResponse.CreateSession(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}

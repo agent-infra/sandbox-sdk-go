@@ -8,6 +8,7 @@ import (
 	core "github.com/agent-infra/sandbox-sdk-go/core"
 	internal "github.com/agent-infra/sandbox-sdk-go/internal"
 	option "github.com/agent-infra/sandbox-sdk-go/option"
+	io "io"
 )
 
 type Client struct {
@@ -142,7 +143,7 @@ func (c *Client) DownloadFile(
 	ctx context.Context,
 	request *sandboxsdkgo.FileDownloadFileRequest,
 	opts ...option.RequestOption,
-) (any, error) {
+) (io.Reader, error) {
 	response, err := c.WithRawResponse.DownloadFile(
 		ctx,
 		request,

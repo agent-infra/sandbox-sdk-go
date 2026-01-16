@@ -10,6 +10,32 @@ import (
 )
 
 var (
+	browserConfigRequestFieldResolution = big.NewInt(1 << 0)
+)
+
+type BrowserConfigRequest struct {
+	// The desired screen resolution, allowed values are: 1920x1080, 640x480, 1360x768, 1280x720, 800x600, 1024x768, 1280x800, 1920x1200, 1280x960, 1400x1050, 1680x1050, 1280x1024, 1600x1200.
+	Resolution *Resolution `json:"resolution,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (b *BrowserConfigRequest) require(field *big.Int) {
+	if b.explicitFields == nil {
+		b.explicitFields = big.NewInt(0)
+	}
+	b.explicitFields.Or(b.explicitFields, field)
+}
+
+// SetResolution sets the Resolution field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (b *BrowserConfigRequest) SetResolution(resolution *Resolution) {
+	b.Resolution = resolution
+	b.require(browserConfigRequestFieldResolution)
+}
+
+var (
 	actionResponseFieldActionPerformed = big.NewInt(1 << 0)
 )
 
@@ -1425,6 +1451,102 @@ func (p *PressAction) String() string {
 		return value
 	}
 	return fmt.Sprintf("%#v", p)
+}
+
+var (
+	resolutionFieldWidth  = big.NewInt(1 << 0)
+	resolutionFieldHeight = big.NewInt(1 << 1)
+)
+
+type Resolution struct {
+	// Screen width in pixels.
+	Width int `json:"width" url:"width"`
+	// Screen height in pixels.
+	Height int `json:"height" url:"height"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *Resolution) GetWidth() int {
+	if r == nil {
+		return 0
+	}
+	return r.Width
+}
+
+func (r *Resolution) GetHeight() int {
+	if r == nil {
+		return 0
+	}
+	return r.Height
+}
+
+func (r *Resolution) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *Resolution) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetWidth sets the Width field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *Resolution) SetWidth(width int) {
+	r.Width = width
+	r.require(resolutionFieldWidth)
+}
+
+// SetHeight sets the Height field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *Resolution) SetHeight(height int) {
+	r.Height = height
+	r.require(resolutionFieldHeight)
+}
+
+func (r *Resolution) UnmarshalJSON(data []byte) error {
+	type unmarshaler Resolution
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = Resolution(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *Resolution) MarshalJSON() ([]byte, error) {
+	type embed Resolution
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *Resolution) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
 }
 
 var (

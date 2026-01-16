@@ -9,12 +9,316 @@ import (
 	big "math/big"
 )
 
+// Describe an available command-line tool.
+var (
+	availableToolFieldName        = big.NewInt(1 << 0)
+	availableToolFieldDescription = big.NewInt(1 << 1)
+)
+
+type AvailableTool struct {
+	// Tool’s command / binary name
+	Name string `json:"name" url:"name"`
+	// Tool’s functionality description
+	Description *string `json:"description,omitempty" url:"description,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (a *AvailableTool) GetName() string {
+	if a == nil {
+		return ""
+	}
+	return a.Name
+}
+
+func (a *AvailableTool) GetDescription() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Description
+}
+
+func (a *AvailableTool) GetExtraProperties() map[string]interface{} {
+	return a.extraProperties
+}
+
+func (a *AvailableTool) require(field *big.Int) {
+	if a.explicitFields == nil {
+		a.explicitFields = big.NewInt(0)
+	}
+	a.explicitFields.Or(a.explicitFields, field)
+}
+
+// SetName sets the Name field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (a *AvailableTool) SetName(name string) {
+	a.Name = name
+	a.require(availableToolFieldName)
+}
+
+// SetDescription sets the Description field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (a *AvailableTool) SetDescription(description *string) {
+	a.Description = description
+	a.require(availableToolFieldDescription)
+}
+
+func (a *AvailableTool) UnmarshalJSON(data []byte) error {
+	type unmarshaler AvailableTool
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*a = AvailableTool(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *a)
+	if err != nil {
+		return err
+	}
+	a.extraProperties = extraProperties
+	a.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (a *AvailableTool) MarshalJSON() ([]byte, error) {
+	type embed AvailableTool
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*a),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, a.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (a *AvailableTool) String() string {
+	if len(a.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(a.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(a); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", a)
+}
+
+// version, path, etc. (python3, python3.11, python3.12, pip3, pip, uv, jupyter)
+var (
+	runtimeEnvFieldPython = big.NewInt(1 << 0)
+	runtimeEnvFieldNodejs = big.NewInt(1 << 1)
+)
+
+type RuntimeEnv struct {
+	Python []*ToolSpec `json:"python" url:"python"`
+	Nodejs []*ToolSpec `json:"nodejs" url:"nodejs"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *RuntimeEnv) GetPython() []*ToolSpec {
+	if r == nil {
+		return nil
+	}
+	return r.Python
+}
+
+func (r *RuntimeEnv) GetNodejs() []*ToolSpec {
+	if r == nil {
+		return nil
+	}
+	return r.Nodejs
+}
+
+func (r *RuntimeEnv) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *RuntimeEnv) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetPython sets the Python field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RuntimeEnv) SetPython(python []*ToolSpec) {
+	r.Python = python
+	r.require(runtimeEnvFieldPython)
+}
+
+// SetNodejs sets the Nodejs field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RuntimeEnv) SetNodejs(nodejs []*ToolSpec) {
+	r.Nodejs = nodejs
+	r.require(runtimeEnvFieldNodejs)
+}
+
+func (r *RuntimeEnv) UnmarshalJSON(data []byte) error {
+	type unmarshaler RuntimeEnv
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = RuntimeEnv(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *RuntimeEnv) MarshalJSON() ([]byte, error) {
+	type embed RuntimeEnv
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *RuntimeEnv) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+// system environment info
+var (
+	sandboxDetailFieldSystem  = big.NewInt(1 << 0)
+	sandboxDetailFieldRuntime = big.NewInt(1 << 1)
+	sandboxDetailFieldUtils   = big.NewInt(1 << 2)
+)
+
+type SandboxDetail struct {
+	System  *SystemEnv      `json:"system" url:"system"`
+	Runtime *RuntimeEnv     `json:"runtime" url:"runtime"`
+	Utils   []*ToolCategory `json:"utils" url:"utils"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (s *SandboxDetail) GetSystem() *SystemEnv {
+	if s == nil {
+		return nil
+	}
+	return s.System
+}
+
+func (s *SandboxDetail) GetRuntime() *RuntimeEnv {
+	if s == nil {
+		return nil
+	}
+	return s.Runtime
+}
+
+func (s *SandboxDetail) GetUtils() []*ToolCategory {
+	if s == nil {
+		return nil
+	}
+	return s.Utils
+}
+
+func (s *SandboxDetail) GetExtraProperties() map[string]interface{} {
+	return s.extraProperties
+}
+
+func (s *SandboxDetail) require(field *big.Int) {
+	if s.explicitFields == nil {
+		s.explicitFields = big.NewInt(0)
+	}
+	s.explicitFields.Or(s.explicitFields, field)
+}
+
+// SetSystem sets the System field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxDetail) SetSystem(system *SystemEnv) {
+	s.System = system
+	s.require(sandboxDetailFieldSystem)
+}
+
+// SetRuntime sets the Runtime field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxDetail) SetRuntime(runtime *RuntimeEnv) {
+	s.Runtime = runtime
+	s.require(sandboxDetailFieldRuntime)
+}
+
+// SetUtils sets the Utils field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxDetail) SetUtils(utils []*ToolCategory) {
+	s.Utils = utils
+	s.require(sandboxDetailFieldUtils)
+}
+
+func (s *SandboxDetail) UnmarshalJSON(data []byte) error {
+	type unmarshaler SandboxDetail
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*s = SandboxDetail(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *s)
+	if err != nil {
+		return err
+	}
+	s.extraProperties = extraProperties
+	s.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (s *SandboxDetail) MarshalJSON() ([]byte, error) {
+	type embed SandboxDetail
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*s),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, s.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (s *SandboxDetail) String() string {
+	if len(s.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(s.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(s); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", s)
+}
+
 var (
 	sandboxResponseFieldSuccess = big.NewInt(1 << 0)
 	sandboxResponseFieldMessage = big.NewInt(1 << 1)
 	sandboxResponseFieldData    = big.NewInt(1 << 2)
 	sandboxResponseFieldHomeDir = big.NewInt(1 << 3)
 	sandboxResponseFieldVersion = big.NewInt(1 << 4)
+	sandboxResponseFieldDetail  = big.NewInt(1 << 5)
 )
 
 type SandboxResponse struct {
@@ -23,9 +327,10 @@ type SandboxResponse struct {
 	// Operation result message
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
-	Data    interface{} `json:"data,omitempty" url:"data,omitempty"`
-	HomeDir string      `json:"home_dir" url:"home_dir"`
-	Version string      `json:"version" url:"version"`
+	Data    interface{}    `json:"data,omitempty" url:"data,omitempty"`
+	HomeDir string         `json:"home_dir" url:"home_dir"`
+	Version string         `json:"version" url:"version"`
+	Detail  *SandboxDetail `json:"detail" url:"detail"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -67,6 +372,13 @@ func (s *SandboxResponse) GetVersion() string {
 		return ""
 	}
 	return s.Version
+}
+
+func (s *SandboxResponse) GetDetail() *SandboxDetail {
+	if s == nil {
+		return nil
+	}
+	return s.Detail
 }
 
 func (s *SandboxResponse) GetExtraProperties() map[string]interface{} {
@@ -115,6 +427,13 @@ func (s *SandboxResponse) SetVersion(version string) {
 	s.require(sandboxResponseFieldVersion)
 }
 
+// SetDetail sets the Detail field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxResponse) SetDetail(detail *SandboxDetail) {
+	s.Detail = detail
+	s.require(sandboxResponseFieldDetail)
+}
+
 func (s *SandboxResponse) UnmarshalJSON(data []byte) error {
 	type unmarshaler SandboxResponse
 	var value unmarshaler
@@ -152,4 +471,386 @@ func (s *SandboxResponse) String() string {
 		return value
 	}
 	return fmt.Sprintf("%#v", s)
+}
+
+var (
+	systemEnvFieldOs            = big.NewInt(1 << 0)
+	systemEnvFieldOsVersion     = big.NewInt(1 << 1)
+	systemEnvFieldArch          = big.NewInt(1 << 2)
+	systemEnvFieldUser          = big.NewInt(1 << 3)
+	systemEnvFieldHomeDir       = big.NewInt(1 << 4)
+	systemEnvFieldTimezone      = big.NewInt(1 << 5)
+	systemEnvFieldOccupiedPorts = big.NewInt(1 << 6)
+)
+
+type SystemEnv struct {
+	Os            string   `json:"os" url:"os"`
+	OsVersion     string   `json:"os_version" url:"os_version"`
+	Arch          string   `json:"arch" url:"arch"`
+	User          string   `json:"user" url:"user"`
+	HomeDir       string   `json:"home_dir" url:"home_dir"`
+	Timezone      string   `json:"timezone" url:"timezone"`
+	OccupiedPorts []string `json:"occupied_ports" url:"occupied_ports"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (s *SystemEnv) GetOs() string {
+	if s == nil {
+		return ""
+	}
+	return s.Os
+}
+
+func (s *SystemEnv) GetOsVersion() string {
+	if s == nil {
+		return ""
+	}
+	return s.OsVersion
+}
+
+func (s *SystemEnv) GetArch() string {
+	if s == nil {
+		return ""
+	}
+	return s.Arch
+}
+
+func (s *SystemEnv) GetUser() string {
+	if s == nil {
+		return ""
+	}
+	return s.User
+}
+
+func (s *SystemEnv) GetHomeDir() string {
+	if s == nil {
+		return ""
+	}
+	return s.HomeDir
+}
+
+func (s *SystemEnv) GetTimezone() string {
+	if s == nil {
+		return ""
+	}
+	return s.Timezone
+}
+
+func (s *SystemEnv) GetOccupiedPorts() []string {
+	if s == nil {
+		return nil
+	}
+	return s.OccupiedPorts
+}
+
+func (s *SystemEnv) GetExtraProperties() map[string]interface{} {
+	return s.extraProperties
+}
+
+func (s *SystemEnv) require(field *big.Int) {
+	if s.explicitFields == nil {
+		s.explicitFields = big.NewInt(0)
+	}
+	s.explicitFields.Or(s.explicitFields, field)
+}
+
+// SetOs sets the Os field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SystemEnv) SetOs(os string) {
+	s.Os = os
+	s.require(systemEnvFieldOs)
+}
+
+// SetOsVersion sets the OsVersion field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SystemEnv) SetOsVersion(osVersion string) {
+	s.OsVersion = osVersion
+	s.require(systemEnvFieldOsVersion)
+}
+
+// SetArch sets the Arch field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SystemEnv) SetArch(arch string) {
+	s.Arch = arch
+	s.require(systemEnvFieldArch)
+}
+
+// SetUser sets the User field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SystemEnv) SetUser(user string) {
+	s.User = user
+	s.require(systemEnvFieldUser)
+}
+
+// SetHomeDir sets the HomeDir field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SystemEnv) SetHomeDir(homeDir string) {
+	s.HomeDir = homeDir
+	s.require(systemEnvFieldHomeDir)
+}
+
+// SetTimezone sets the Timezone field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SystemEnv) SetTimezone(timezone string) {
+	s.Timezone = timezone
+	s.require(systemEnvFieldTimezone)
+}
+
+// SetOccupiedPorts sets the OccupiedPorts field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SystemEnv) SetOccupiedPorts(occupiedPorts []string) {
+	s.OccupiedPorts = occupiedPorts
+	s.require(systemEnvFieldOccupiedPorts)
+}
+
+func (s *SystemEnv) UnmarshalJSON(data []byte) error {
+	type unmarshaler SystemEnv
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*s = SystemEnv(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *s)
+	if err != nil {
+		return err
+	}
+	s.extraProperties = extraProperties
+	s.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (s *SystemEnv) MarshalJSON() ([]byte, error) {
+	type embed SystemEnv
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*s),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, s.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (s *SystemEnv) String() string {
+	if len(s.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(s.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(s); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", s)
+}
+
+// 将可用工具按功能分类
+var (
+	toolCategoryFieldCategory = big.NewInt(1 << 0)
+	toolCategoryFieldTools    = big.NewInt(1 << 1)
+)
+
+type ToolCategory struct {
+	// Name of tool category
+	Category string `json:"category" url:"category"`
+	// List of tools under this category
+	Tools []*AvailableTool `json:"tools" url:"tools"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (t *ToolCategory) GetCategory() string {
+	if t == nil {
+		return ""
+	}
+	return t.Category
+}
+
+func (t *ToolCategory) GetTools() []*AvailableTool {
+	if t == nil {
+		return nil
+	}
+	return t.Tools
+}
+
+func (t *ToolCategory) GetExtraProperties() map[string]interface{} {
+	return t.extraProperties
+}
+
+func (t *ToolCategory) require(field *big.Int) {
+	if t.explicitFields == nil {
+		t.explicitFields = big.NewInt(0)
+	}
+	t.explicitFields.Or(t.explicitFields, field)
+}
+
+// SetCategory sets the Category field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (t *ToolCategory) SetCategory(category string) {
+	t.Category = category
+	t.require(toolCategoryFieldCategory)
+}
+
+// SetTools sets the Tools field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (t *ToolCategory) SetTools(tools []*AvailableTool) {
+	t.Tools = tools
+	t.require(toolCategoryFieldTools)
+}
+
+func (t *ToolCategory) UnmarshalJSON(data []byte) error {
+	type unmarshaler ToolCategory
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*t = ToolCategory(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *t)
+	if err != nil {
+		return err
+	}
+	t.extraProperties = extraProperties
+	t.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (t *ToolCategory) MarshalJSON() ([]byte, error) {
+	type embed ToolCategory
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*t),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, t.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (t *ToolCategory) String() string {
+	if len(t.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(t.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(t); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", t)
+}
+
+// Tool specification
+var (
+	toolSpecFieldVer   = big.NewInt(1 << 0)
+	toolSpecFieldBin   = big.NewInt(1 << 1)
+	toolSpecFieldAlias = big.NewInt(1 << 2)
+)
+
+type ToolSpec struct {
+	Ver   *string  `json:"ver,omitempty" url:"ver,omitempty"`
+	Bin   *string  `json:"bin,omitempty" url:"bin,omitempty"`
+	Alias []string `json:"alias,omitempty" url:"alias,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (t *ToolSpec) GetVer() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Ver
+}
+
+func (t *ToolSpec) GetBin() *string {
+	if t == nil {
+		return nil
+	}
+	return t.Bin
+}
+
+func (t *ToolSpec) GetAlias() []string {
+	if t == nil {
+		return nil
+	}
+	return t.Alias
+}
+
+func (t *ToolSpec) GetExtraProperties() map[string]interface{} {
+	return t.extraProperties
+}
+
+func (t *ToolSpec) require(field *big.Int) {
+	if t.explicitFields == nil {
+		t.explicitFields = big.NewInt(0)
+	}
+	t.explicitFields.Or(t.explicitFields, field)
+}
+
+// SetVer sets the Ver field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (t *ToolSpec) SetVer(ver *string) {
+	t.Ver = ver
+	t.require(toolSpecFieldVer)
+}
+
+// SetBin sets the Bin field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (t *ToolSpec) SetBin(bin *string) {
+	t.Bin = bin
+	t.require(toolSpecFieldBin)
+}
+
+// SetAlias sets the Alias field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (t *ToolSpec) SetAlias(alias []string) {
+	t.Alias = alias
+	t.require(toolSpecFieldAlias)
+}
+
+func (t *ToolSpec) UnmarshalJSON(data []byte) error {
+	type unmarshaler ToolSpec
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*t = ToolSpec(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *t)
+	if err != nil {
+		return err
+	}
+	t.extraProperties = extraProperties
+	t.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (t *ToolSpec) MarshalJSON() ([]byte, error) {
+	type embed ToolSpec
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*t),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, t.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (t *ToolSpec) String() string {
+	if len(t.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(t.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(t); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", t)
 }

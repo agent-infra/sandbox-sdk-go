@@ -46,7 +46,7 @@ func (c *Client) ListMcpTools(
 	// Name of the MCP server
 	serverName string,
 	opts ...option.RequestOption,
-) (*sandboxsdkgo.ResponseListToolsResult, error) {
+) (*sandboxsdkgo.ResponseListToolsResultModel, error) {
 	response, err := c.WithRawResponse.ListMcpTools(
 		ctx,
 		serverName,
@@ -77,7 +77,7 @@ func (c *Client) ExecuteMcpTool(
 	toolName string,
 	request map[string]any,
 	opts ...option.RequestOption,
-) (*sandboxsdkgo.ResponseCallToolResult, error) {
+) (*sandboxsdkgo.ResponseCallToolResultModel, error) {
 	response, err := c.WithRawResponse.ExecuteMcpTool(
 		ctx,
 		serverName,

@@ -403,10 +403,10 @@ var (
 )
 
 type CallToolResult struct {
-	Meta              map[string]interface{}       `json:"_meta,omitempty" url:"_meta,omitempty"`
-	Content           []*CallToolResultContentItem `json:"content" url:"content"`
-	StructuredContent map[string]interface{}       `json:"structuredContent,omitempty" url:"structuredContent,omitempty"`
-	IsError           *bool                        `json:"isError,omitempty" url:"isError,omitempty"`
+	Meta              map[string]interface{}                        `json:"_meta,omitempty" url:"_meta,omitempty"`
+	Content           []*ResponseCallToolResultModelDataContentItem `json:"content" url:"content"`
+	StructuredContent map[string]interface{}                        `json:"structuredContent,omitempty" url:"structuredContent,omitempty"`
+	IsError           *bool                                         `json:"isError,omitempty" url:"isError,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -423,7 +423,7 @@ func (c *CallToolResult) GetMeta() map[string]interface{} {
 	return c.Meta
 }
 
-func (c *CallToolResult) GetContent() []*CallToolResultContentItem {
+func (c *CallToolResult) GetContent() []*ResponseCallToolResultModelDataContentItem {
 	if c == nil {
 		return nil
 	}
@@ -464,7 +464,7 @@ func (c *CallToolResult) SetMeta(meta map[string]interface{}) {
 
 // SetContent sets the Content field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
-func (c *CallToolResult) SetContent(content []*CallToolResultContentItem) {
+func (c *CallToolResult) SetContent(content []*ResponseCallToolResultModelDataContentItem) {
 	c.Content = content
 	c.require(callToolResultFieldContent)
 }
@@ -524,195 +524,6 @@ func (c *CallToolResult) String() string {
 		return value
 	}
 	return fmt.Sprintf("%#v", c)
-}
-
-type CallToolResultContentItem struct {
-	Type         string
-	Text         *TextContent
-	Image        *ImageContent
-	Audio        *AudioContent
-	ResourceLink *ResourceLink
-	Resource     *EmbeddedResource
-}
-
-func (c *CallToolResultContentItem) GetType() string {
-	if c == nil {
-		return ""
-	}
-	return c.Type
-}
-
-func (c *CallToolResultContentItem) GetText() *TextContent {
-	if c == nil {
-		return nil
-	}
-	return c.Text
-}
-
-func (c *CallToolResultContentItem) GetImage() *ImageContent {
-	if c == nil {
-		return nil
-	}
-	return c.Image
-}
-
-func (c *CallToolResultContentItem) GetAudio() *AudioContent {
-	if c == nil {
-		return nil
-	}
-	return c.Audio
-}
-
-func (c *CallToolResultContentItem) GetResourceLink() *ResourceLink {
-	if c == nil {
-		return nil
-	}
-	return c.ResourceLink
-}
-
-func (c *CallToolResultContentItem) GetResource() *EmbeddedResource {
-	if c == nil {
-		return nil
-	}
-	return c.Resource
-}
-
-func (c *CallToolResultContentItem) UnmarshalJSON(data []byte) error {
-	var unmarshaler struct {
-		Type string `json:"type"`
-	}
-	if err := json.Unmarshal(data, &unmarshaler); err != nil {
-		return err
-	}
-	c.Type = unmarshaler.Type
-	if unmarshaler.Type == "" {
-		return fmt.Errorf("%T did not include discriminant type", c)
-	}
-	switch unmarshaler.Type {
-	case "text":
-		value := new(TextContent)
-		if err := json.Unmarshal(data, &value); err != nil {
-			return err
-		}
-		c.Text = value
-	case "image":
-		value := new(ImageContent)
-		if err := json.Unmarshal(data, &value); err != nil {
-			return err
-		}
-		c.Image = value
-	case "audio":
-		value := new(AudioContent)
-		if err := json.Unmarshal(data, &value); err != nil {
-			return err
-		}
-		c.Audio = value
-	case "resource_link":
-		value := new(ResourceLink)
-		if err := json.Unmarshal(data, &value); err != nil {
-			return err
-		}
-		c.ResourceLink = value
-	case "resource":
-		value := new(EmbeddedResource)
-		if err := json.Unmarshal(data, &value); err != nil {
-			return err
-		}
-		c.Resource = value
-	}
-	return nil
-}
-
-func (c CallToolResultContentItem) MarshalJSON() ([]byte, error) {
-	if err := c.validate(); err != nil {
-		return nil, err
-	}
-	if c.Text != nil {
-		return internal.MarshalJSONWithExtraProperty(c.Text, "type", "text")
-	}
-	if c.Image != nil {
-		return internal.MarshalJSONWithExtraProperty(c.Image, "type", "image")
-	}
-	if c.Audio != nil {
-		return internal.MarshalJSONWithExtraProperty(c.Audio, "type", "audio")
-	}
-	if c.ResourceLink != nil {
-		return internal.MarshalJSONWithExtraProperty(c.ResourceLink, "type", "resource_link")
-	}
-	if c.Resource != nil {
-		return internal.MarshalJSONWithExtraProperty(c.Resource, "type", "resource")
-	}
-	return nil, fmt.Errorf("type %T does not define a non-empty union type", c)
-}
-
-type CallToolResultContentItemVisitor interface {
-	VisitText(*TextContent) error
-	VisitImage(*ImageContent) error
-	VisitAudio(*AudioContent) error
-	VisitResourceLink(*ResourceLink) error
-	VisitResource(*EmbeddedResource) error
-}
-
-func (c *CallToolResultContentItem) Accept(visitor CallToolResultContentItemVisitor) error {
-	if c.Text != nil {
-		return visitor.VisitText(c.Text)
-	}
-	if c.Image != nil {
-		return visitor.VisitImage(c.Image)
-	}
-	if c.Audio != nil {
-		return visitor.VisitAudio(c.Audio)
-	}
-	if c.ResourceLink != nil {
-		return visitor.VisitResourceLink(c.ResourceLink)
-	}
-	if c.Resource != nil {
-		return visitor.VisitResource(c.Resource)
-	}
-	return fmt.Errorf("type %T does not define a non-empty union type", c)
-}
-
-func (c *CallToolResultContentItem) validate() error {
-	if c == nil {
-		return fmt.Errorf("type %T is nil", c)
-	}
-	var fields []string
-	if c.Text != nil {
-		fields = append(fields, "text")
-	}
-	if c.Image != nil {
-		fields = append(fields, "image")
-	}
-	if c.Audio != nil {
-		fields = append(fields, "audio")
-	}
-	if c.ResourceLink != nil {
-		fields = append(fields, "resource_link")
-	}
-	if c.Resource != nil {
-		fields = append(fields, "resource")
-	}
-	if len(fields) == 0 {
-		if c.Type != "" {
-			return fmt.Errorf("type %T defines a discriminant set to %q but the field is not set", c, c.Type)
-		}
-		return fmt.Errorf("type %T is empty", c)
-	}
-	if len(fields) > 1 {
-		return fmt.Errorf("type %T defines values for %s, but only one value is allowed", c, fields)
-	}
-	if c.Type != "" {
-		field := fields[0]
-		if c.Type != field {
-			return fmt.Errorf(
-				"type %T defines a discriminant set to %q, but it does not match the %T field; either remove or update the discriminant to match",
-				c,
-				c.Type,
-				c,
-			)
-		}
-	}
-	return nil
 }
 
 // The contents of a resource, embedded into a prompt or tool call result.
@@ -1475,12 +1286,12 @@ func (r *ResourceLink) String() string {
 }
 
 var (
-	responseCallToolResultFieldSuccess = big.NewInt(1 << 0)
-	responseCallToolResultFieldMessage = big.NewInt(1 << 1)
-	responseCallToolResultFieldData    = big.NewInt(1 << 2)
+	responseCallToolResultModelFieldSuccess = big.NewInt(1 << 0)
+	responseCallToolResultModelFieldMessage = big.NewInt(1 << 1)
+	responseCallToolResultModelFieldData    = big.NewInt(1 << 2)
 )
 
-type ResponseCallToolResult struct {
+type ResponseCallToolResultModel struct {
 	// Whether the operation was successful
 	Success *bool `json:"success,omitempty" url:"success,omitempty"`
 	// Operation result message
@@ -1495,32 +1306,32 @@ type ResponseCallToolResult struct {
 	rawJSON         json.RawMessage
 }
 
-func (r *ResponseCallToolResult) GetSuccess() *bool {
+func (r *ResponseCallToolResultModel) GetSuccess() *bool {
 	if r == nil {
 		return nil
 	}
 	return r.Success
 }
 
-func (r *ResponseCallToolResult) GetMessage() *string {
+func (r *ResponseCallToolResultModel) GetMessage() *string {
 	if r == nil {
 		return nil
 	}
 	return r.Message
 }
 
-func (r *ResponseCallToolResult) GetData() *CallToolResult {
+func (r *ResponseCallToolResultModel) GetData() *CallToolResult {
 	if r == nil {
 		return nil
 	}
 	return r.Data
 }
 
-func (r *ResponseCallToolResult) GetExtraProperties() map[string]interface{} {
+func (r *ResponseCallToolResultModel) GetExtraProperties() map[string]interface{} {
 	return r.extraProperties
 }
 
-func (r *ResponseCallToolResult) require(field *big.Int) {
+func (r *ResponseCallToolResultModel) require(field *big.Int) {
 	if r.explicitFields == nil {
 		r.explicitFields = big.NewInt(0)
 	}
@@ -1529,32 +1340,32 @@ func (r *ResponseCallToolResult) require(field *big.Int) {
 
 // SetSuccess sets the Success field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseCallToolResult) SetSuccess(success *bool) {
+func (r *ResponseCallToolResultModel) SetSuccess(success *bool) {
 	r.Success = success
-	r.require(responseCallToolResultFieldSuccess)
+	r.require(responseCallToolResultModelFieldSuccess)
 }
 
 // SetMessage sets the Message field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseCallToolResult) SetMessage(message *string) {
+func (r *ResponseCallToolResultModel) SetMessage(message *string) {
 	r.Message = message
-	r.require(responseCallToolResultFieldMessage)
+	r.require(responseCallToolResultModelFieldMessage)
 }
 
 // SetData sets the Data field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseCallToolResult) SetData(data *CallToolResult) {
+func (r *ResponseCallToolResultModel) SetData(data *CallToolResult) {
 	r.Data = data
-	r.require(responseCallToolResultFieldData)
+	r.require(responseCallToolResultModelFieldData)
 }
 
-func (r *ResponseCallToolResult) UnmarshalJSON(data []byte) error {
-	type unmarshaler ResponseCallToolResult
+func (r *ResponseCallToolResultModel) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseCallToolResultModel
 	var value unmarshaler
 	if err := json.Unmarshal(data, &value); err != nil {
 		return err
 	}
-	*r = ResponseCallToolResult(value)
+	*r = ResponseCallToolResultModel(value)
 	extraProperties, err := internal.ExtractExtraProperties(data, *r)
 	if err != nil {
 		return err
@@ -1564,8 +1375,8 @@ func (r *ResponseCallToolResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (r *ResponseCallToolResult) MarshalJSON() ([]byte, error) {
-	type embed ResponseCallToolResult
+func (r *ResponseCallToolResultModel) MarshalJSON() ([]byte, error) {
+	type embed ResponseCallToolResultModel
 	var marshaler = struct {
 		embed
 	}{
@@ -1575,7 +1386,7 @@ func (r *ResponseCallToolResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(explicitMarshaler)
 }
 
-func (r *ResponseCallToolResult) String() string {
+func (r *ResponseCallToolResultModel) String() string {
 	if len(r.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
 			return value
@@ -1585,6 +1396,195 @@ func (r *ResponseCallToolResult) String() string {
 		return value
 	}
 	return fmt.Sprintf("%#v", r)
+}
+
+type ResponseCallToolResultModelDataContentItem struct {
+	Type         string
+	Text         *TextContent
+	Image        *ImageContent
+	Audio        *AudioContent
+	ResourceLink *ResourceLink
+	Resource     *EmbeddedResource
+}
+
+func (r *ResponseCallToolResultModelDataContentItem) GetType() string {
+	if r == nil {
+		return ""
+	}
+	return r.Type
+}
+
+func (r *ResponseCallToolResultModelDataContentItem) GetText() *TextContent {
+	if r == nil {
+		return nil
+	}
+	return r.Text
+}
+
+func (r *ResponseCallToolResultModelDataContentItem) GetImage() *ImageContent {
+	if r == nil {
+		return nil
+	}
+	return r.Image
+}
+
+func (r *ResponseCallToolResultModelDataContentItem) GetAudio() *AudioContent {
+	if r == nil {
+		return nil
+	}
+	return r.Audio
+}
+
+func (r *ResponseCallToolResultModelDataContentItem) GetResourceLink() *ResourceLink {
+	if r == nil {
+		return nil
+	}
+	return r.ResourceLink
+}
+
+func (r *ResponseCallToolResultModelDataContentItem) GetResource() *EmbeddedResource {
+	if r == nil {
+		return nil
+	}
+	return r.Resource
+}
+
+func (r *ResponseCallToolResultModelDataContentItem) UnmarshalJSON(data []byte) error {
+	var unmarshaler struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
+		return err
+	}
+	r.Type = unmarshaler.Type
+	if unmarshaler.Type == "" {
+		return fmt.Errorf("%T did not include discriminant type", r)
+	}
+	switch unmarshaler.Type {
+	case "text":
+		value := new(TextContent)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		r.Text = value
+	case "image":
+		value := new(ImageContent)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		r.Image = value
+	case "audio":
+		value := new(AudioContent)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		r.Audio = value
+	case "resource_link":
+		value := new(ResourceLink)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		r.ResourceLink = value
+	case "resource":
+		value := new(EmbeddedResource)
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		r.Resource = value
+	}
+	return nil
+}
+
+func (r ResponseCallToolResultModelDataContentItem) MarshalJSON() ([]byte, error) {
+	if err := r.validate(); err != nil {
+		return nil, err
+	}
+	if r.Text != nil {
+		return internal.MarshalJSONWithExtraProperty(r.Text, "type", "text")
+	}
+	if r.Image != nil {
+		return internal.MarshalJSONWithExtraProperty(r.Image, "type", "image")
+	}
+	if r.Audio != nil {
+		return internal.MarshalJSONWithExtraProperty(r.Audio, "type", "audio")
+	}
+	if r.ResourceLink != nil {
+		return internal.MarshalJSONWithExtraProperty(r.ResourceLink, "type", "resource_link")
+	}
+	if r.Resource != nil {
+		return internal.MarshalJSONWithExtraProperty(r.Resource, "type", "resource")
+	}
+	return nil, fmt.Errorf("type %T does not define a non-empty union type", r)
+}
+
+type ResponseCallToolResultModelDataContentItemVisitor interface {
+	VisitText(*TextContent) error
+	VisitImage(*ImageContent) error
+	VisitAudio(*AudioContent) error
+	VisitResourceLink(*ResourceLink) error
+	VisitResource(*EmbeddedResource) error
+}
+
+func (r *ResponseCallToolResultModelDataContentItem) Accept(visitor ResponseCallToolResultModelDataContentItemVisitor) error {
+	if r.Text != nil {
+		return visitor.VisitText(r.Text)
+	}
+	if r.Image != nil {
+		return visitor.VisitImage(r.Image)
+	}
+	if r.Audio != nil {
+		return visitor.VisitAudio(r.Audio)
+	}
+	if r.ResourceLink != nil {
+		return visitor.VisitResourceLink(r.ResourceLink)
+	}
+	if r.Resource != nil {
+		return visitor.VisitResource(r.Resource)
+	}
+	return fmt.Errorf("type %T does not define a non-empty union type", r)
+}
+
+func (r *ResponseCallToolResultModelDataContentItem) validate() error {
+	if r == nil {
+		return fmt.Errorf("type %T is nil", r)
+	}
+	var fields []string
+	if r.Text != nil {
+		fields = append(fields, "text")
+	}
+	if r.Image != nil {
+		fields = append(fields, "image")
+	}
+	if r.Audio != nil {
+		fields = append(fields, "audio")
+	}
+	if r.ResourceLink != nil {
+		fields = append(fields, "resource_link")
+	}
+	if r.Resource != nil {
+		fields = append(fields, "resource")
+	}
+	if len(fields) == 0 {
+		if r.Type != "" {
+			return fmt.Errorf("type %T defines a discriminant set to %q but the field is not set", r, r.Type)
+		}
+		return fmt.Errorf("type %T is empty", r)
+	}
+	if len(fields) > 1 {
+		return fmt.Errorf("type %T defines values for %s, but only one value is allowed", r, fields)
+	}
+	if r.Type != "" {
+		field := fields[0]
+		if r.Type != field {
+			return fmt.Errorf(
+				"type %T defines a discriminant set to %q, but it does not match the %T field; either remove or update the discriminant to match",
+				r,
+				r.Type,
+				r,
+			)
+		}
+	}
+	return nil
 }
 
 var (
@@ -1701,12 +1701,12 @@ func (r *ResponseListStr) String() string {
 }
 
 var (
-	responseListToolsResultFieldSuccess = big.NewInt(1 << 0)
-	responseListToolsResultFieldMessage = big.NewInt(1 << 1)
-	responseListToolsResultFieldData    = big.NewInt(1 << 2)
+	responseListToolsResultModelFieldSuccess = big.NewInt(1 << 0)
+	responseListToolsResultModelFieldMessage = big.NewInt(1 << 1)
+	responseListToolsResultModelFieldData    = big.NewInt(1 << 2)
 )
 
-type ResponseListToolsResult struct {
+type ResponseListToolsResultModel struct {
 	// Whether the operation was successful
 	Success *bool `json:"success,omitempty" url:"success,omitempty"`
 	// Operation result message
@@ -1721,32 +1721,32 @@ type ResponseListToolsResult struct {
 	rawJSON         json.RawMessage
 }
 
-func (r *ResponseListToolsResult) GetSuccess() *bool {
+func (r *ResponseListToolsResultModel) GetSuccess() *bool {
 	if r == nil {
 		return nil
 	}
 	return r.Success
 }
 
-func (r *ResponseListToolsResult) GetMessage() *string {
+func (r *ResponseListToolsResultModel) GetMessage() *string {
 	if r == nil {
 		return nil
 	}
 	return r.Message
 }
 
-func (r *ResponseListToolsResult) GetData() *ListToolsResult {
+func (r *ResponseListToolsResultModel) GetData() *ListToolsResult {
 	if r == nil {
 		return nil
 	}
 	return r.Data
 }
 
-func (r *ResponseListToolsResult) GetExtraProperties() map[string]interface{} {
+func (r *ResponseListToolsResultModel) GetExtraProperties() map[string]interface{} {
 	return r.extraProperties
 }
 
-func (r *ResponseListToolsResult) require(field *big.Int) {
+func (r *ResponseListToolsResultModel) require(field *big.Int) {
 	if r.explicitFields == nil {
 		r.explicitFields = big.NewInt(0)
 	}
@@ -1755,32 +1755,32 @@ func (r *ResponseListToolsResult) require(field *big.Int) {
 
 // SetSuccess sets the Success field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseListToolsResult) SetSuccess(success *bool) {
+func (r *ResponseListToolsResultModel) SetSuccess(success *bool) {
 	r.Success = success
-	r.require(responseListToolsResultFieldSuccess)
+	r.require(responseListToolsResultModelFieldSuccess)
 }
 
 // SetMessage sets the Message field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseListToolsResult) SetMessage(message *string) {
+func (r *ResponseListToolsResultModel) SetMessage(message *string) {
 	r.Message = message
-	r.require(responseListToolsResultFieldMessage)
+	r.require(responseListToolsResultModelFieldMessage)
 }
 
 // SetData sets the Data field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseListToolsResult) SetData(data *ListToolsResult) {
+func (r *ResponseListToolsResultModel) SetData(data *ListToolsResult) {
 	r.Data = data
-	r.require(responseListToolsResultFieldData)
+	r.require(responseListToolsResultModelFieldData)
 }
 
-func (r *ResponseListToolsResult) UnmarshalJSON(data []byte) error {
-	type unmarshaler ResponseListToolsResult
+func (r *ResponseListToolsResultModel) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseListToolsResultModel
 	var value unmarshaler
 	if err := json.Unmarshal(data, &value); err != nil {
 		return err
 	}
-	*r = ResponseListToolsResult(value)
+	*r = ResponseListToolsResultModel(value)
 	extraProperties, err := internal.ExtractExtraProperties(data, *r)
 	if err != nil {
 		return err
@@ -1790,8 +1790,8 @@ func (r *ResponseListToolsResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (r *ResponseListToolsResult) MarshalJSON() ([]byte, error) {
-	type embed ResponseListToolsResult
+func (r *ResponseListToolsResultModel) MarshalJSON() ([]byte, error) {
+	type embed ResponseListToolsResultModel
 	var marshaler = struct {
 		embed
 	}{
@@ -1801,7 +1801,7 @@ func (r *ResponseListToolsResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(explicitMarshaler)
 }
 
-func (r *ResponseListToolsResult) String() string {
+func (r *ResponseListToolsResultModel) String() string {
 	if len(r.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
 			return value
@@ -2071,6 +2071,7 @@ var (
 	toolFieldIcons        = big.NewInt(1 << 5)
 	toolFieldAnnotations  = big.NewInt(1 << 6)
 	toolFieldMeta         = big.NewInt(1 << 7)
+	toolFieldExecution    = big.NewInt(1 << 8)
 )
 
 type Tool struct {
@@ -2082,6 +2083,7 @@ type Tool struct {
 	Icons        []*Icon                `json:"icons,omitempty" url:"icons,omitempty"`
 	Annotations  *ToolAnnotations       `json:"annotations,omitempty" url:"annotations,omitempty"`
 	Meta         map[string]interface{} `json:"_meta,omitempty" url:"_meta,omitempty"`
+	Execution    *ToolExecution         `json:"execution,omitempty" url:"execution,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -2145,6 +2147,13 @@ func (t *Tool) GetMeta() map[string]interface{} {
 		return nil
 	}
 	return t.Meta
+}
+
+func (t *Tool) GetExecution() *ToolExecution {
+	if t == nil {
+		return nil
+	}
+	return t.Execution
 }
 
 func (t *Tool) GetExtraProperties() map[string]interface{} {
@@ -2212,6 +2221,13 @@ func (t *Tool) SetAnnotations(annotations *ToolAnnotations) {
 func (t *Tool) SetMeta(meta map[string]interface{}) {
 	t.Meta = meta
 	t.require(toolFieldMeta)
+}
+
+// SetExecution sets the Execution field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (t *Tool) SetExecution(execution *ToolExecution) {
+	t.Execution = execution
+	t.require(toolFieldExecution)
 }
 
 func (t *Tool) UnmarshalJSON(data []byte) error {
@@ -2410,4 +2426,113 @@ func (t *ToolAnnotations) String() string {
 		return value
 	}
 	return fmt.Sprintf("%#v", t)
+}
+
+// Execution-related properties for a tool.
+var (
+	toolExecutionFieldTaskSupport = big.NewInt(1 << 0)
+)
+
+type ToolExecution struct {
+	TaskSupport *ToolExecutionTaskSupport `json:"taskSupport,omitempty" url:"taskSupport,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	ExtraProperties map[string]interface{} `json:"-" url:"-"`
+
+	rawJSON json.RawMessage
+}
+
+func (t *ToolExecution) GetTaskSupport() *ToolExecutionTaskSupport {
+	if t == nil {
+		return nil
+	}
+	return t.TaskSupport
+}
+
+func (t *ToolExecution) GetExtraProperties() map[string]interface{} {
+	return t.ExtraProperties
+}
+
+func (t *ToolExecution) require(field *big.Int) {
+	if t.explicitFields == nil {
+		t.explicitFields = big.NewInt(0)
+	}
+	t.explicitFields.Or(t.explicitFields, field)
+}
+
+// SetTaskSupport sets the TaskSupport field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (t *ToolExecution) SetTaskSupport(taskSupport *ToolExecutionTaskSupport) {
+	t.TaskSupport = taskSupport
+	t.require(toolExecutionFieldTaskSupport)
+}
+
+func (t *ToolExecution) UnmarshalJSON(data []byte) error {
+	type embed ToolExecution
+	var unmarshaler = struct {
+		embed
+	}{
+		embed: embed(*t),
+	}
+	if err := json.Unmarshal(data, &unmarshaler); err != nil {
+		return err
+	}
+	*t = ToolExecution(unmarshaler.embed)
+	extraProperties, err := internal.ExtractExtraProperties(data, *t)
+	if err != nil {
+		return err
+	}
+	t.ExtraProperties = extraProperties
+	t.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (t *ToolExecution) MarshalJSON() ([]byte, error) {
+	type embed ToolExecution
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*t),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, t.explicitFields)
+	return internal.MarshalJSONWithExtraProperties(explicitMarshaler, t.ExtraProperties)
+}
+
+func (t *ToolExecution) String() string {
+	if len(t.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(t.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(t); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", t)
+}
+
+type ToolExecutionTaskSupport string
+
+const (
+	ToolExecutionTaskSupportForbidden ToolExecutionTaskSupport = "forbidden"
+	ToolExecutionTaskSupportOptional  ToolExecutionTaskSupport = "optional"
+	ToolExecutionTaskSupportRequired  ToolExecutionTaskSupport = "required"
+)
+
+func NewToolExecutionTaskSupportFromString(s string) (ToolExecutionTaskSupport, error) {
+	switch s {
+	case "forbidden":
+		return ToolExecutionTaskSupportForbidden, nil
+	case "optional":
+		return ToolExecutionTaskSupportOptional, nil
+	case "required":
+		return ToolExecutionTaskSupportRequired, nil
+	}
+	var t ToolExecutionTaskSupport
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (t ToolExecutionTaskSupport) Ptr() *ToolExecutionTaskSupport {
+	return &t
 }
