@@ -182,122 +182,10 @@ func (d *DependencyCommandResult) String() string {
 }
 
 var (
-	responseDictFieldSuccess = big.NewInt(1 << 0)
-	responseDictFieldMessage = big.NewInt(1 << 1)
-	responseDictFieldData    = big.NewInt(1 << 2)
-)
-
-type ResponseDict struct {
-	// Whether the operation was successful
-	Success *bool `json:"success,omitempty" url:"success,omitempty"`
-	// Operation result message
-	Message *string `json:"message,omitempty" url:"message,omitempty"`
-	// Data returned from the operation
-	Data map[string]interface{} `json:"data,omitempty" url:"data,omitempty"`
-
-	// Private bitmask of fields set to an explicit value and therefore not to be omitted
-	explicitFields *big.Int `json:"-" url:"-"`
-
-	extraProperties map[string]interface{}
-	rawJSON         json.RawMessage
-}
-
-func (r *ResponseDict) GetSuccess() *bool {
-	if r == nil {
-		return nil
-	}
-	return r.Success
-}
-
-func (r *ResponseDict) GetMessage() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Message
-}
-
-func (r *ResponseDict) GetData() map[string]interface{} {
-	if r == nil {
-		return nil
-	}
-	return r.Data
-}
-
-func (r *ResponseDict) GetExtraProperties() map[string]interface{} {
-	return r.extraProperties
-}
-
-func (r *ResponseDict) require(field *big.Int) {
-	if r.explicitFields == nil {
-		r.explicitFields = big.NewInt(0)
-	}
-	r.explicitFields.Or(r.explicitFields, field)
-}
-
-// SetSuccess sets the Success field and marks it as non-optional;
-// this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseDict) SetSuccess(success *bool) {
-	r.Success = success
-	r.require(responseDictFieldSuccess)
-}
-
-// SetMessage sets the Message field and marks it as non-optional;
-// this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseDict) SetMessage(message *string) {
-	r.Message = message
-	r.require(responseDictFieldMessage)
-}
-
-// SetData sets the Data field and marks it as non-optional;
-// this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseDict) SetData(data map[string]interface{}) {
-	r.Data = data
-	r.require(responseDictFieldData)
-}
-
-func (r *ResponseDict) UnmarshalJSON(data []byte) error {
-	type unmarshaler ResponseDict
-	var value unmarshaler
-	if err := json.Unmarshal(data, &value); err != nil {
-		return err
-	}
-	*r = ResponseDict(value)
-	extraProperties, err := internal.ExtractExtraProperties(data, *r)
-	if err != nil {
-		return err
-	}
-	r.extraProperties = extraProperties
-	r.rawJSON = json.RawMessage(data)
-	return nil
-}
-
-func (r *ResponseDict) MarshalJSON() ([]byte, error) {
-	type embed ResponseDict
-	var marshaler = struct {
-		embed
-	}{
-		embed: embed(*r),
-	}
-	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
-	return json.Marshal(explicitMarshaler)
-}
-
-func (r *ResponseDict) String() string {
-	if len(r.rawJSON) > 0 {
-		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
-			return value
-		}
-	}
-	if value, err := internal.StringifyJSON(r); err == nil {
-		return value
-	}
-	return fmt.Sprintf("%#v", r)
-}
-
-var (
 	responseSkillContentResultFieldSuccess = big.NewInt(1 << 0)
 	responseSkillContentResultFieldMessage = big.NewInt(1 << 1)
 	responseSkillContentResultFieldData    = big.NewInt(1 << 2)
+	responseSkillContentResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseSkillContentResult struct {
@@ -307,6 +195,8 @@ type ResponseSkillContentResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *SkillContentResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -334,6 +224,13 @@ func (r *ResponseSkillContentResult) GetData() *SkillContentResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseSkillContentResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseSkillContentResult) GetExtraProperties() map[string]interface{} {
@@ -366,6 +263,13 @@ func (r *ResponseSkillContentResult) SetMessage(message *string) {
 func (r *ResponseSkillContentResult) SetData(data *SkillContentResult) {
 	r.Data = data
 	r.require(responseSkillContentResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseSkillContentResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseSkillContentResultFieldHint)
 }
 
 func (r *ResponseSkillContentResult) UnmarshalJSON(data []byte) error {
@@ -411,6 +315,7 @@ var (
 	responseSkillMetadataFieldSuccess = big.NewInt(1 << 0)
 	responseSkillMetadataFieldMessage = big.NewInt(1 << 1)
 	responseSkillMetadataFieldData    = big.NewInt(1 << 2)
+	responseSkillMetadataFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseSkillMetadata struct {
@@ -420,6 +325,8 @@ type ResponseSkillMetadata struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *SkillMetadata `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -447,6 +354,13 @@ func (r *ResponseSkillMetadata) GetData() *SkillMetadata {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseSkillMetadata) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseSkillMetadata) GetExtraProperties() map[string]interface{} {
@@ -479,6 +393,13 @@ func (r *ResponseSkillMetadata) SetMessage(message *string) {
 func (r *ResponseSkillMetadata) SetData(data *SkillMetadata) {
 	r.Data = data
 	r.require(responseSkillMetadataFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseSkillMetadata) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseSkillMetadataFieldHint)
 }
 
 func (r *ResponseSkillMetadata) UnmarshalJSON(data []byte) error {
@@ -524,6 +445,7 @@ var (
 	responseSkillMetadataCollectionFieldSuccess = big.NewInt(1 << 0)
 	responseSkillMetadataCollectionFieldMessage = big.NewInt(1 << 1)
 	responseSkillMetadataCollectionFieldData    = big.NewInt(1 << 2)
+	responseSkillMetadataCollectionFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseSkillMetadataCollection struct {
@@ -533,6 +455,8 @@ type ResponseSkillMetadataCollection struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *SkillMetadataCollection `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -560,6 +484,13 @@ func (r *ResponseSkillMetadataCollection) GetData() *SkillMetadataCollection {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseSkillMetadataCollection) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseSkillMetadataCollection) GetExtraProperties() map[string]interface{} {
@@ -592,6 +523,13 @@ func (r *ResponseSkillMetadataCollection) SetMessage(message *string) {
 func (r *ResponseSkillMetadataCollection) SetData(data *SkillMetadataCollection) {
 	r.Data = data
 	r.require(responseSkillMetadataCollectionFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseSkillMetadataCollection) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseSkillMetadataCollectionFieldHint)
 }
 
 func (r *ResponseSkillMetadataCollection) UnmarshalJSON(data []byte) error {
@@ -637,6 +575,7 @@ var (
 	responseSkillRegistrationResultFieldSuccess = big.NewInt(1 << 0)
 	responseSkillRegistrationResultFieldMessage = big.NewInt(1 << 1)
 	responseSkillRegistrationResultFieldData    = big.NewInt(1 << 2)
+	responseSkillRegistrationResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseSkillRegistrationResult struct {
@@ -646,6 +585,8 @@ type ResponseSkillRegistrationResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *SkillRegistrationResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -673,6 +614,13 @@ func (r *ResponseSkillRegistrationResult) GetData() *SkillRegistrationResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseSkillRegistrationResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseSkillRegistrationResult) GetExtraProperties() map[string]interface{} {
@@ -705,6 +653,13 @@ func (r *ResponseSkillRegistrationResult) SetMessage(message *string) {
 func (r *ResponseSkillRegistrationResult) SetData(data *SkillRegistrationResult) {
 	r.Data = data
 	r.require(responseSkillRegistrationResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseSkillRegistrationResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseSkillRegistrationResultFieldHint)
 }
 
 func (r *ResponseSkillRegistrationResult) UnmarshalJSON(data []byte) error {

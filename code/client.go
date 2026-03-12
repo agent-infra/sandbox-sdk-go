@@ -50,6 +50,8 @@ func (c *Client) ExecuteCode(
 }
 
 // Return metadata about supported code runtimes
+//
+// Note: Version info is cached at service level (first call only runs subprocess).
 func (c *Client) GetInfo(
 	ctx context.Context,
 	opts ...option.RequestOption,

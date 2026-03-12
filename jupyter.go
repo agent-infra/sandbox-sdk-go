@@ -18,7 +18,7 @@ var (
 type JupyterCreateSessionRequest struct {
 	// Unique identifier for the session, auto-generated if not provided
 	SessionId *string `json:"session_id,omitempty" url:"-"`
-	// Kernel name to use (e.g., 'python3', 'python3.11', 'python3.12'). Defaults to 'python3'
+	// Kernel name: 'python3', 'python3.10', 'python3.11', 'python3.12'. Defaults to 'python3'.
 	KernelName *string `json:"kernel_name,omitempty" url:"-"`
 	// Current working directory for the session
 	Cwd *string `json:"cwd,omitempty" url:"-"`
@@ -68,7 +68,7 @@ type JupyterExecuteRequest struct {
 	Code string `json:"code" url:"-"`
 	// Execution timeout in seconds
 	Timeout *int `json:"timeout,omitempty" url:"-"`
-	// Kernel name to use (e.g., 'python3', 'python3.11', 'python3.12'). Defaults to 'python3'
+	// Kernel name: 'python3', 'python3.10', 'python3.11', 'python3.12'. Defaults to 'python3'.
 	KernelName *string `json:"kernel_name,omitempty" url:"-"`
 	// Session ID to maintain kernel state across requests
 	SessionId *string `json:"session_id,omitempty" url:"-"`
@@ -330,7 +330,7 @@ type JupyterExecuteResponse struct {
 	// Name of the kernel used for execution
 	KernelName string `json:"kernel_name" url:"kernel_name"`
 	// Session ID for this kernel instance
-	SessionId string `json:"session_id" url:"session_id"`
+	SessionId *string `json:"session_id,omitempty" url:"session_id,omitempty"`
 	// Execution status: ok, error, or timeout
 	Status string `json:"status" url:"status"`
 	// Execution count from the kernel
@@ -356,9 +356,9 @@ func (j *JupyterExecuteResponse) GetKernelName() string {
 	return j.KernelName
 }
 
-func (j *JupyterExecuteResponse) GetSessionId() string {
+func (j *JupyterExecuteResponse) GetSessionId() *string {
 	if j == nil {
-		return ""
+		return nil
 	}
 	return j.SessionId
 }
@@ -418,7 +418,7 @@ func (j *JupyterExecuteResponse) SetKernelName(kernelName string) {
 
 // SetSessionId sets the SessionId field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
-func (j *JupyterExecuteResponse) SetSessionId(sessionId string) {
+func (j *JupyterExecuteResponse) SetSessionId(sessionId *string) {
 	j.SessionId = sessionId
 	j.require(jupyterExecuteResponseFieldSessionId)
 }
@@ -899,6 +899,7 @@ var (
 	responseActiveSessionsResultFieldSuccess = big.NewInt(1 << 0)
 	responseActiveSessionsResultFieldMessage = big.NewInt(1 << 1)
 	responseActiveSessionsResultFieldData    = big.NewInt(1 << 2)
+	responseActiveSessionsResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseActiveSessionsResult struct {
@@ -908,6 +909,8 @@ type ResponseActiveSessionsResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *ActiveSessionsResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -935,6 +938,13 @@ func (r *ResponseActiveSessionsResult) GetData() *ActiveSessionsResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseActiveSessionsResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseActiveSessionsResult) GetExtraProperties() map[string]interface{} {
@@ -967,6 +977,13 @@ func (r *ResponseActiveSessionsResult) SetMessage(message *string) {
 func (r *ResponseActiveSessionsResult) SetData(data *ActiveSessionsResult) {
 	r.Data = data
 	r.require(responseActiveSessionsResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseActiveSessionsResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseActiveSessionsResultFieldHint)
 }
 
 func (r *ResponseActiveSessionsResult) UnmarshalJSON(data []byte) error {
@@ -1012,6 +1029,7 @@ var (
 	responseJupyterCreateSessionResponseFieldSuccess = big.NewInt(1 << 0)
 	responseJupyterCreateSessionResponseFieldMessage = big.NewInt(1 << 1)
 	responseJupyterCreateSessionResponseFieldData    = big.NewInt(1 << 2)
+	responseJupyterCreateSessionResponseFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseJupyterCreateSessionResponse struct {
@@ -1021,6 +1039,8 @@ type ResponseJupyterCreateSessionResponse struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *JupyterCreateSessionResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1048,6 +1068,13 @@ func (r *ResponseJupyterCreateSessionResponse) GetData() *JupyterCreateSessionRe
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseJupyterCreateSessionResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseJupyterCreateSessionResponse) GetExtraProperties() map[string]interface{} {
@@ -1080,6 +1107,13 @@ func (r *ResponseJupyterCreateSessionResponse) SetMessage(message *string) {
 func (r *ResponseJupyterCreateSessionResponse) SetData(data *JupyterCreateSessionResponse) {
 	r.Data = data
 	r.require(responseJupyterCreateSessionResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseJupyterCreateSessionResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseJupyterCreateSessionResponseFieldHint)
 }
 
 func (r *ResponseJupyterCreateSessionResponse) UnmarshalJSON(data []byte) error {
@@ -1125,6 +1159,7 @@ var (
 	responseJupyterExecuteResponseFieldSuccess = big.NewInt(1 << 0)
 	responseJupyterExecuteResponseFieldMessage = big.NewInt(1 << 1)
 	responseJupyterExecuteResponseFieldData    = big.NewInt(1 << 2)
+	responseJupyterExecuteResponseFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseJupyterExecuteResponse struct {
@@ -1134,6 +1169,8 @@ type ResponseJupyterExecuteResponse struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *JupyterExecuteResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1161,6 +1198,13 @@ func (r *ResponseJupyterExecuteResponse) GetData() *JupyterExecuteResponse {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseJupyterExecuteResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseJupyterExecuteResponse) GetExtraProperties() map[string]interface{} {
@@ -1193,6 +1237,13 @@ func (r *ResponseJupyterExecuteResponse) SetMessage(message *string) {
 func (r *ResponseJupyterExecuteResponse) SetData(data *JupyterExecuteResponse) {
 	r.Data = data
 	r.require(responseJupyterExecuteResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseJupyterExecuteResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseJupyterExecuteResponseFieldHint)
 }
 
 func (r *ResponseJupyterExecuteResponse) UnmarshalJSON(data []byte) error {
@@ -1238,6 +1289,7 @@ var (
 	responseJupyterInfoResponseFieldSuccess = big.NewInt(1 << 0)
 	responseJupyterInfoResponseFieldMessage = big.NewInt(1 << 1)
 	responseJupyterInfoResponseFieldData    = big.NewInt(1 << 2)
+	responseJupyterInfoResponseFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseJupyterInfoResponse struct {
@@ -1247,6 +1299,8 @@ type ResponseJupyterInfoResponse struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *JupyterInfoResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1274,6 +1328,13 @@ func (r *ResponseJupyterInfoResponse) GetData() *JupyterInfoResponse {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseJupyterInfoResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseJupyterInfoResponse) GetExtraProperties() map[string]interface{} {
@@ -1306,6 +1367,13 @@ func (r *ResponseJupyterInfoResponse) SetMessage(message *string) {
 func (r *ResponseJupyterInfoResponse) SetData(data *JupyterInfoResponse) {
 	r.Data = data
 	r.require(responseJupyterInfoResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseJupyterInfoResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseJupyterInfoResponseFieldHint)
 }
 
 func (r *ResponseJupyterInfoResponse) UnmarshalJSON(data []byte) error {

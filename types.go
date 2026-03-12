@@ -92,6 +92,7 @@ var (
 	responseFieldSuccess = big.NewInt(1 << 0)
 	responseFieldMessage = big.NewInt(1 << 1)
 	responseFieldData    = big.NewInt(1 << 2)
+	responseFieldHint    = big.NewInt(1 << 3)
 )
 
 type Response struct {
@@ -101,6 +102,8 @@ type Response struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data interface{} `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -128,6 +131,13 @@ func (r *Response) GetData() interface{} {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *Response) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *Response) GetExtraProperties() map[string]interface{} {
@@ -162,6 +172,13 @@ func (r *Response) SetData(data interface{}) {
 	r.require(responseFieldData)
 }
 
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *Response) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseFieldHint)
+}
+
 func (r *Response) UnmarshalJSON(data []byte) error {
 	type unmarshaler Response
 	var value unmarshaler
@@ -190,6 +207,526 @@ func (r *Response) MarshalJSON() ([]byte, error) {
 }
 
 func (r *Response) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseDictFieldSuccess = big.NewInt(1 << 0)
+	responseDictFieldMessage = big.NewInt(1 << 1)
+	responseDictFieldData    = big.NewInt(1 << 2)
+	responseDictFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseDict struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data map[string]interface{} `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseDict) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseDict) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseDict) GetData() map[string]interface{} {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseDict) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseDict) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseDict) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseDict) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseDictFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseDict) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseDictFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseDict) SetData(data map[string]interface{}) {
+	r.Data = data
+	r.require(responseDictFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseDict) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseDictFieldHint)
+}
+
+func (r *ResponseDict) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseDict
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseDict(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseDict) MarshalJSON() ([]byte, error) {
+	type embed ResponseDict
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseDict) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseListFieldSuccess = big.NewInt(1 << 0)
+	responseListFieldMessage = big.NewInt(1 << 1)
+	responseListFieldData    = big.NewInt(1 << 2)
+	responseListFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseList struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data []interface{} `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseList) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseList) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseList) GetData() []interface{} {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseList) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseList) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseList) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseList) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseListFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseList) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseListFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseList) SetData(data []interface{}) {
+	r.Data = data
+	r.require(responseListFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseList) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseListFieldHint)
+}
+
+func (r *ResponseList) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseList
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseList(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseList) MarshalJSON() ([]byte, error) {
+	type embed ResponseList
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseList) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseListStrFieldSuccess = big.NewInt(1 << 0)
+	responseListStrFieldMessage = big.NewInt(1 << 1)
+	responseListStrFieldData    = big.NewInt(1 << 2)
+	responseListStrFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseListStr struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data []string `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseListStr) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseListStr) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseListStr) GetData() []string {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseListStr) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseListStr) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseListStr) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseListStr) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseListStrFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseListStr) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseListStrFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseListStr) SetData(data []string) {
+	r.Data = data
+	r.require(responseListStrFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseListStr) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseListStrFieldHint)
+}
+
+func (r *ResponseListStr) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseListStr
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseListStr(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseListStr) MarshalJSON() ([]byte, error) {
+	type embed ResponseListStr
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseListStr) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseStrFieldSuccess = big.NewInt(1 << 0)
+	responseStrFieldMessage = big.NewInt(1 << 1)
+	responseStrFieldData    = big.NewInt(1 << 2)
+	responseStrFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseStr struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *string `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseStr) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseStr) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseStr) GetData() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseStr) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseStr) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseStr) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseStr) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseStrFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseStr) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseStrFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseStr) SetData(data *string) {
+	r.Data = data
+	r.require(responseStrFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseStr) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseStrFieldHint)
+}
+
+func (r *ResponseStr) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseStr
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseStr(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseStr) MarshalJSON() ([]byte, error) {
+	type embed ResponseStr
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseStr) String() string {
 	if len(r.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
 			return value

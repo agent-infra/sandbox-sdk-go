@@ -1289,6 +1289,7 @@ var (
 	responseCallToolResultModelFieldSuccess = big.NewInt(1 << 0)
 	responseCallToolResultModelFieldMessage = big.NewInt(1 << 1)
 	responseCallToolResultModelFieldData    = big.NewInt(1 << 2)
+	responseCallToolResultModelFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseCallToolResultModel struct {
@@ -1298,6 +1299,8 @@ type ResponseCallToolResultModel struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *CallToolResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1325,6 +1328,13 @@ func (r *ResponseCallToolResultModel) GetData() *CallToolResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseCallToolResultModel) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseCallToolResultModel) GetExtraProperties() map[string]interface{} {
@@ -1357,6 +1367,13 @@ func (r *ResponseCallToolResultModel) SetMessage(message *string) {
 func (r *ResponseCallToolResultModel) SetData(data *CallToolResult) {
 	r.Data = data
 	r.require(responseCallToolResultModelFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseCallToolResultModel) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseCallToolResultModelFieldHint)
 }
 
 func (r *ResponseCallToolResultModel) UnmarshalJSON(data []byte) error {
@@ -1588,122 +1605,10 @@ func (r *ResponseCallToolResultModelDataContentItem) validate() error {
 }
 
 var (
-	responseListStrFieldSuccess = big.NewInt(1 << 0)
-	responseListStrFieldMessage = big.NewInt(1 << 1)
-	responseListStrFieldData    = big.NewInt(1 << 2)
-)
-
-type ResponseListStr struct {
-	// Whether the operation was successful
-	Success *bool `json:"success,omitempty" url:"success,omitempty"`
-	// Operation result message
-	Message *string `json:"message,omitempty" url:"message,omitempty"`
-	// Data returned from the operation
-	Data []string `json:"data,omitempty" url:"data,omitempty"`
-
-	// Private bitmask of fields set to an explicit value and therefore not to be omitted
-	explicitFields *big.Int `json:"-" url:"-"`
-
-	extraProperties map[string]interface{}
-	rawJSON         json.RawMessage
-}
-
-func (r *ResponseListStr) GetSuccess() *bool {
-	if r == nil {
-		return nil
-	}
-	return r.Success
-}
-
-func (r *ResponseListStr) GetMessage() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Message
-}
-
-func (r *ResponseListStr) GetData() []string {
-	if r == nil {
-		return nil
-	}
-	return r.Data
-}
-
-func (r *ResponseListStr) GetExtraProperties() map[string]interface{} {
-	return r.extraProperties
-}
-
-func (r *ResponseListStr) require(field *big.Int) {
-	if r.explicitFields == nil {
-		r.explicitFields = big.NewInt(0)
-	}
-	r.explicitFields.Or(r.explicitFields, field)
-}
-
-// SetSuccess sets the Success field and marks it as non-optional;
-// this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseListStr) SetSuccess(success *bool) {
-	r.Success = success
-	r.require(responseListStrFieldSuccess)
-}
-
-// SetMessage sets the Message field and marks it as non-optional;
-// this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseListStr) SetMessage(message *string) {
-	r.Message = message
-	r.require(responseListStrFieldMessage)
-}
-
-// SetData sets the Data field and marks it as non-optional;
-// this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseListStr) SetData(data []string) {
-	r.Data = data
-	r.require(responseListStrFieldData)
-}
-
-func (r *ResponseListStr) UnmarshalJSON(data []byte) error {
-	type unmarshaler ResponseListStr
-	var value unmarshaler
-	if err := json.Unmarshal(data, &value); err != nil {
-		return err
-	}
-	*r = ResponseListStr(value)
-	extraProperties, err := internal.ExtractExtraProperties(data, *r)
-	if err != nil {
-		return err
-	}
-	r.extraProperties = extraProperties
-	r.rawJSON = json.RawMessage(data)
-	return nil
-}
-
-func (r *ResponseListStr) MarshalJSON() ([]byte, error) {
-	type embed ResponseListStr
-	var marshaler = struct {
-		embed
-	}{
-		embed: embed(*r),
-	}
-	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
-	return json.Marshal(explicitMarshaler)
-}
-
-func (r *ResponseListStr) String() string {
-	if len(r.rawJSON) > 0 {
-		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
-			return value
-		}
-	}
-	if value, err := internal.StringifyJSON(r); err == nil {
-		return value
-	}
-	return fmt.Sprintf("%#v", r)
-}
-
-var (
 	responseListToolsResultModelFieldSuccess = big.NewInt(1 << 0)
 	responseListToolsResultModelFieldMessage = big.NewInt(1 << 1)
 	responseListToolsResultModelFieldData    = big.NewInt(1 << 2)
+	responseListToolsResultModelFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseListToolsResultModel struct {
@@ -1713,6 +1618,8 @@ type ResponseListToolsResultModel struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *ListToolsResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1740,6 +1647,13 @@ func (r *ResponseListToolsResultModel) GetData() *ListToolsResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseListToolsResultModel) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseListToolsResultModel) GetExtraProperties() map[string]interface{} {
@@ -1772,6 +1686,13 @@ func (r *ResponseListToolsResultModel) SetMessage(message *string) {
 func (r *ResponseListToolsResultModel) SetData(data *ListToolsResult) {
 	r.Data = data
 	r.require(responseListToolsResultModelFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseListToolsResultModel) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseListToolsResultModelFieldHint)
 }
 
 func (r *ResponseListToolsResultModel) UnmarshalJSON(data []byte) error {

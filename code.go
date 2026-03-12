@@ -10,10 +10,12 @@ import (
 )
 
 var (
-	codeExecuteRequestFieldLanguage = big.NewInt(1 << 0)
-	codeExecuteRequestFieldCode     = big.NewInt(1 << 1)
-	codeExecuteRequestFieldTimeout  = big.NewInt(1 << 2)
-	codeExecuteRequestFieldCwd      = big.NewInt(1 << 3)
+	codeExecuteRequestFieldLanguage  = big.NewInt(1 << 0)
+	codeExecuteRequestFieldCode      = big.NewInt(1 << 1)
+	codeExecuteRequestFieldTimeout   = big.NewInt(1 << 2)
+	codeExecuteRequestFieldCwd       = big.NewInt(1 << 3)
+	codeExecuteRequestFieldStateful  = big.NewInt(1 << 4)
+	codeExecuteRequestFieldSessionId = big.NewInt(1 << 5)
 )
 
 type CodeExecuteRequest struct {
@@ -25,6 +27,10 @@ type CodeExecuteRequest struct {
 	Timeout *int `json:"timeout,omitempty" url:"-"`
 	// Current working directory for code execution
 	Cwd *string `json:"cwd,omitempty" url:"-"`
+	// Enable stateful execution using Jupyter kernel. When True, variables and state persist across requests with the same session_id.
+	Stateful *bool `json:"stateful,omitempty" url:"-"`
+	// Session ID for stateful execution. Required when stateful=True to maintain state across requests. Auto-generated if not provided.
+	SessionId *string `json:"session_id,omitempty" url:"-"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -65,6 +71,20 @@ func (c *CodeExecuteRequest) SetCwd(cwd *string) {
 	c.require(codeExecuteRequestFieldCwd)
 }
 
+// SetStateful sets the Stateful field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (c *CodeExecuteRequest) SetStateful(stateful *bool) {
+	c.Stateful = stateful
+	c.require(codeExecuteRequestFieldStateful)
+}
+
+// SetSessionId sets the SessionId field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (c *CodeExecuteRequest) SetSessionId(sessionId *string) {
+	c.SessionId = sessionId
+	c.require(codeExecuteRequestFieldSessionId)
+}
+
 // Unified code execution response model
 var (
 	codeExecuteResponseFieldLanguage  = big.NewInt(1 << 0)
@@ -75,6 +95,7 @@ var (
 	codeExecuteResponseFieldStderr    = big.NewInt(1 << 5)
 	codeExecuteResponseFieldExitCode  = big.NewInt(1 << 6)
 	codeExecuteResponseFieldTraceback = big.NewInt(1 << 7)
+	codeExecuteResponseFieldSessionId = big.NewInt(1 << 8)
 )
 
 type CodeExecuteResponse struct {
@@ -94,6 +115,8 @@ type CodeExecuteResponse struct {
 	ExitCode *int `json:"exit_code,omitempty" url:"exit_code,omitempty"`
 	// Captured error traceback lines when available
 	Traceback []string `json:"traceback,omitempty" url:"traceback,omitempty"`
+	// Session ID for stateful execution (only present when stateful=True)
+	SessionId *string `json:"session_id,omitempty" url:"session_id,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -156,6 +179,13 @@ func (c *CodeExecuteResponse) GetTraceback() []string {
 		return nil
 	}
 	return c.Traceback
+}
+
+func (c *CodeExecuteResponse) GetSessionId() *string {
+	if c == nil {
+		return nil
+	}
+	return c.SessionId
 }
 
 func (c *CodeExecuteResponse) GetExtraProperties() map[string]interface{} {
@@ -223,6 +253,13 @@ func (c *CodeExecuteResponse) SetExitCode(exitCode *int) {
 func (c *CodeExecuteResponse) SetTraceback(traceback []string) {
 	c.Traceback = traceback
 	c.require(codeExecuteResponseFieldTraceback)
+}
+
+// SetSessionId sets the SessionId field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (c *CodeExecuteResponse) SetSessionId(sessionId *string) {
+	c.SessionId = sessionId
+	c.require(codeExecuteResponseFieldSessionId)
 }
 
 func (c *CodeExecuteResponse) UnmarshalJSON(data []byte) error {
@@ -536,6 +573,7 @@ var (
 	responseCodeExecuteResponseFieldSuccess = big.NewInt(1 << 0)
 	responseCodeExecuteResponseFieldMessage = big.NewInt(1 << 1)
 	responseCodeExecuteResponseFieldData    = big.NewInt(1 << 2)
+	responseCodeExecuteResponseFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseCodeExecuteResponse struct {
@@ -545,6 +583,8 @@ type ResponseCodeExecuteResponse struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *CodeExecuteResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -572,6 +612,13 @@ func (r *ResponseCodeExecuteResponse) GetData() *CodeExecuteResponse {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseCodeExecuteResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseCodeExecuteResponse) GetExtraProperties() map[string]interface{} {
@@ -604,6 +651,13 @@ func (r *ResponseCodeExecuteResponse) SetMessage(message *string) {
 func (r *ResponseCodeExecuteResponse) SetData(data *CodeExecuteResponse) {
 	r.Data = data
 	r.require(responseCodeExecuteResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseCodeExecuteResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseCodeExecuteResponseFieldHint)
 }
 
 func (r *ResponseCodeExecuteResponse) UnmarshalJSON(data []byte) error {
@@ -649,6 +703,7 @@ var (
 	responseCodeInfoResponseFieldSuccess = big.NewInt(1 << 0)
 	responseCodeInfoResponseFieldMessage = big.NewInt(1 << 1)
 	responseCodeInfoResponseFieldData    = big.NewInt(1 << 2)
+	responseCodeInfoResponseFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseCodeInfoResponse struct {
@@ -658,6 +713,8 @@ type ResponseCodeInfoResponse struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *CodeInfoResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -685,6 +742,13 @@ func (r *ResponseCodeInfoResponse) GetData() *CodeInfoResponse {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseCodeInfoResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseCodeInfoResponse) GetExtraProperties() map[string]interface{} {
@@ -717,6 +781,13 @@ func (r *ResponseCodeInfoResponse) SetMessage(message *string) {
 func (r *ResponseCodeInfoResponse) SetData(data *CodeInfoResponse) {
 	r.Data = data
 	r.require(responseCodeInfoResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseCodeInfoResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseCodeInfoResponseFieldHint)
 }
 
 func (r *ResponseCodeInfoResponse) UnmarshalJSON(data []byte) error {

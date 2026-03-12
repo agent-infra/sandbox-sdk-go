@@ -74,7 +74,9 @@ var (
 	shellExecRequestFieldTimeout          = big.NewInt(1 << 4)
 	shellExecRequestFieldStrict           = big.NewInt(1 << 5)
 	shellExecRequestFieldNoChangeTimeout  = big.NewInt(1 << 6)
-	shellExecRequestFieldPreserveSymlinks = big.NewInt(1 << 7)
+	shellExecRequestFieldHardTimeout      = big.NewInt(1 << 7)
+	shellExecRequestFieldPreserveSymlinks = big.NewInt(1 << 8)
+	shellExecRequestFieldTruncate         = big.NewInt(1 << 9)
 )
 
 type ShellExecRequest struct {
@@ -92,8 +94,12 @@ type ShellExecRequest struct {
 	Strict *bool `json:"strict,omitempty" url:"-"`
 	// Timeout (seconds) for detecting no new output from a command. If no output change is detected within this time, command returns with NO_CHANGE_TIMEOUT status. Overrides session-level setting for this command only.
 	NoChangeTimeout *int `json:"no_change_timeout,omitempty" url:"-"`
+	// Hard timeout (seconds) for command execution. When reached, the command is forcefully stopped and current console output is returned with HARD_TIMEOUT status. Unlike timeout (which only affects HTTP response timing), this actually terminates the command.
+	HardTimeout *float64 `json:"hard_timeout,omitempty" url:"-"`
 	// If True, preserve symlinks in working directory path (pwd shows symlink path). If False, symlinks are resolved to physical paths. Defaults to False for backward compatibility.
 	PreserveSymlinks *bool `json:"preserve_symlinks,omitempty" url:"-"`
+	// If True, truncate output when it exceeds 30000 characters (default: True)
+	Truncate *bool `json:"truncate,omitempty" url:"-"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -155,11 +161,25 @@ func (s *ShellExecRequest) SetNoChangeTimeout(noChangeTimeout *int) {
 	s.require(shellExecRequestFieldNoChangeTimeout)
 }
 
+// SetHardTimeout sets the HardTimeout field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellExecRequest) SetHardTimeout(hardTimeout *float64) {
+	s.HardTimeout = hardTimeout
+	s.require(shellExecRequestFieldHardTimeout)
+}
+
 // SetPreserveSymlinks sets the PreserveSymlinks field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
 func (s *ShellExecRequest) SetPreserveSymlinks(preserveSymlinks *bool) {
 	s.PreserveSymlinks = preserveSymlinks
 	s.require(shellExecRequestFieldPreserveSymlinks)
+}
+
+// SetTruncate sets the Truncate field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellExecRequest) SetTruncate(truncate *bool) {
+	s.Truncate = truncate
+	s.require(shellExecRequestFieldTruncate)
 }
 
 var (
@@ -418,6 +438,7 @@ var (
 	responseActiveShellSessionsResultFieldSuccess = big.NewInt(1 << 0)
 	responseActiveShellSessionsResultFieldMessage = big.NewInt(1 << 1)
 	responseActiveShellSessionsResultFieldData    = big.NewInt(1 << 2)
+	responseActiveShellSessionsResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseActiveShellSessionsResult struct {
@@ -427,6 +448,8 @@ type ResponseActiveShellSessionsResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *ActiveShellSessionsResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -454,6 +477,13 @@ func (r *ResponseActiveShellSessionsResult) GetData() *ActiveShellSessionsResult
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseActiveShellSessionsResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseActiveShellSessionsResult) GetExtraProperties() map[string]interface{} {
@@ -486,6 +516,13 @@ func (r *ResponseActiveShellSessionsResult) SetMessage(message *string) {
 func (r *ResponseActiveShellSessionsResult) SetData(data *ActiveShellSessionsResult) {
 	r.Data = data
 	r.require(responseActiveShellSessionsResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseActiveShellSessionsResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseActiveShellSessionsResultFieldHint)
 }
 
 func (r *ResponseActiveShellSessionsResult) UnmarshalJSON(data []byte) error {
@@ -531,6 +568,7 @@ var (
 	responseShellCommandResultFieldSuccess = big.NewInt(1 << 0)
 	responseShellCommandResultFieldMessage = big.NewInt(1 << 1)
 	responseShellCommandResultFieldData    = big.NewInt(1 << 2)
+	responseShellCommandResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseShellCommandResult struct {
@@ -540,6 +578,8 @@ type ResponseShellCommandResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *ShellCommandResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -567,6 +607,13 @@ func (r *ResponseShellCommandResult) GetData() *ShellCommandResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseShellCommandResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseShellCommandResult) GetExtraProperties() map[string]interface{} {
@@ -599,6 +646,13 @@ func (r *ResponseShellCommandResult) SetMessage(message *string) {
 func (r *ResponseShellCommandResult) SetData(data *ShellCommandResult) {
 	r.Data = data
 	r.require(responseShellCommandResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseShellCommandResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseShellCommandResultFieldHint)
 }
 
 func (r *ResponseShellCommandResult) UnmarshalJSON(data []byte) error {
@@ -644,6 +698,7 @@ var (
 	responseShellCreateSessionResponseFieldSuccess = big.NewInt(1 << 0)
 	responseShellCreateSessionResponseFieldMessage = big.NewInt(1 << 1)
 	responseShellCreateSessionResponseFieldData    = big.NewInt(1 << 2)
+	responseShellCreateSessionResponseFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseShellCreateSessionResponse struct {
@@ -653,6 +708,8 @@ type ResponseShellCreateSessionResponse struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *ShellCreateSessionResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -680,6 +737,13 @@ func (r *ResponseShellCreateSessionResponse) GetData() *ShellCreateSessionRespon
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseShellCreateSessionResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseShellCreateSessionResponse) GetExtraProperties() map[string]interface{} {
@@ -712,6 +776,13 @@ func (r *ResponseShellCreateSessionResponse) SetMessage(message *string) {
 func (r *ResponseShellCreateSessionResponse) SetData(data *ShellCreateSessionResponse) {
 	r.Data = data
 	r.require(responseShellCreateSessionResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseShellCreateSessionResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseShellCreateSessionResponseFieldHint)
 }
 
 func (r *ResponseShellCreateSessionResponse) UnmarshalJSON(data []byte) error {
@@ -757,6 +828,7 @@ var (
 	responseShellKillResultFieldSuccess = big.NewInt(1 << 0)
 	responseShellKillResultFieldMessage = big.NewInt(1 << 1)
 	responseShellKillResultFieldData    = big.NewInt(1 << 2)
+	responseShellKillResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseShellKillResult struct {
@@ -766,6 +838,8 @@ type ResponseShellKillResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *ShellKillResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -793,6 +867,13 @@ func (r *ResponseShellKillResult) GetData() *ShellKillResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseShellKillResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseShellKillResult) GetExtraProperties() map[string]interface{} {
@@ -825,6 +906,13 @@ func (r *ResponseShellKillResult) SetMessage(message *string) {
 func (r *ResponseShellKillResult) SetData(data *ShellKillResult) {
 	r.Data = data
 	r.require(responseShellKillResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseShellKillResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseShellKillResultFieldHint)
 }
 
 func (r *ResponseShellKillResult) UnmarshalJSON(data []byte) error {
@@ -870,6 +958,7 @@ var (
 	responseShellViewResultFieldSuccess = big.NewInt(1 << 0)
 	responseShellViewResultFieldMessage = big.NewInt(1 << 1)
 	responseShellViewResultFieldData    = big.NewInt(1 << 2)
+	responseShellViewResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseShellViewResult struct {
@@ -879,6 +968,8 @@ type ResponseShellViewResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *ShellViewResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -906,6 +997,13 @@ func (r *ResponseShellViewResult) GetData() *ShellViewResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseShellViewResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseShellViewResult) GetExtraProperties() map[string]interface{} {
@@ -938,6 +1036,13 @@ func (r *ResponseShellViewResult) SetMessage(message *string) {
 func (r *ResponseShellViewResult) SetData(data *ShellViewResult) {
 	r.Data = data
 	r.require(responseShellViewResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseShellViewResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseShellViewResultFieldHint)
 }
 
 func (r *ResponseShellViewResult) UnmarshalJSON(data []byte) error {
@@ -983,6 +1088,7 @@ var (
 	responseShellWaitResultFieldSuccess = big.NewInt(1 << 0)
 	responseShellWaitResultFieldMessage = big.NewInt(1 << 1)
 	responseShellWaitResultFieldData    = big.NewInt(1 << 2)
+	responseShellWaitResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseShellWaitResult struct {
@@ -992,6 +1098,8 @@ type ResponseShellWaitResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *ShellWaitResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1019,6 +1127,13 @@ func (r *ResponseShellWaitResult) GetData() *ShellWaitResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseShellWaitResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseShellWaitResult) GetExtraProperties() map[string]interface{} {
@@ -1051,6 +1166,13 @@ func (r *ResponseShellWaitResult) SetMessage(message *string) {
 func (r *ResponseShellWaitResult) SetData(data *ShellWaitResult) {
 	r.Data = data
 	r.require(responseShellWaitResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseShellWaitResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseShellWaitResultFieldHint)
 }
 
 func (r *ResponseShellWaitResult) UnmarshalJSON(data []byte) error {
@@ -1096,6 +1218,7 @@ var (
 	responseShellWriteResultFieldSuccess = big.NewInt(1 << 0)
 	responseShellWriteResultFieldMessage = big.NewInt(1 << 1)
 	responseShellWriteResultFieldData    = big.NewInt(1 << 2)
+	responseShellWriteResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseShellWriteResult struct {
@@ -1105,6 +1228,8 @@ type ResponseShellWriteResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *ShellWriteResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1132,6 +1257,13 @@ func (r *ResponseShellWriteResult) GetData() *ShellWriteResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseShellWriteResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseShellWriteResult) GetExtraProperties() map[string]interface{} {
@@ -1166,6 +1298,13 @@ func (r *ResponseShellWriteResult) SetData(data *ShellWriteResult) {
 	r.require(responseShellWriteResultFieldData)
 }
 
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseShellWriteResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseShellWriteResultFieldHint)
+}
+
 func (r *ResponseShellWriteResult) UnmarshalJSON(data []byte) error {
 	type unmarshaler ResponseShellWriteResult
 	var value unmarshaler
@@ -1194,119 +1333,6 @@ func (r *ResponseShellWriteResult) MarshalJSON() ([]byte, error) {
 }
 
 func (r *ResponseShellWriteResult) String() string {
-	if len(r.rawJSON) > 0 {
-		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
-			return value
-		}
-	}
-	if value, err := internal.StringifyJSON(r); err == nil {
-		return value
-	}
-	return fmt.Sprintf("%#v", r)
-}
-
-var (
-	responseStrFieldSuccess = big.NewInt(1 << 0)
-	responseStrFieldMessage = big.NewInt(1 << 1)
-	responseStrFieldData    = big.NewInt(1 << 2)
-)
-
-type ResponseStr struct {
-	// Whether the operation was successful
-	Success *bool `json:"success,omitempty" url:"success,omitempty"`
-	// Operation result message
-	Message *string `json:"message,omitempty" url:"message,omitempty"`
-	// Data returned from the operation
-	Data *string `json:"data,omitempty" url:"data,omitempty"`
-
-	// Private bitmask of fields set to an explicit value and therefore not to be omitted
-	explicitFields *big.Int `json:"-" url:"-"`
-
-	extraProperties map[string]interface{}
-	rawJSON         json.RawMessage
-}
-
-func (r *ResponseStr) GetSuccess() *bool {
-	if r == nil {
-		return nil
-	}
-	return r.Success
-}
-
-func (r *ResponseStr) GetMessage() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Message
-}
-
-func (r *ResponseStr) GetData() *string {
-	if r == nil {
-		return nil
-	}
-	return r.Data
-}
-
-func (r *ResponseStr) GetExtraProperties() map[string]interface{} {
-	return r.extraProperties
-}
-
-func (r *ResponseStr) require(field *big.Int) {
-	if r.explicitFields == nil {
-		r.explicitFields = big.NewInt(0)
-	}
-	r.explicitFields.Or(r.explicitFields, field)
-}
-
-// SetSuccess sets the Success field and marks it as non-optional;
-// this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseStr) SetSuccess(success *bool) {
-	r.Success = success
-	r.require(responseStrFieldSuccess)
-}
-
-// SetMessage sets the Message field and marks it as non-optional;
-// this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseStr) SetMessage(message *string) {
-	r.Message = message
-	r.require(responseStrFieldMessage)
-}
-
-// SetData sets the Data field and marks it as non-optional;
-// this prevents an empty or null value for this field from being omitted during serialization.
-func (r *ResponseStr) SetData(data *string) {
-	r.Data = data
-	r.require(responseStrFieldData)
-}
-
-func (r *ResponseStr) UnmarshalJSON(data []byte) error {
-	type unmarshaler ResponseStr
-	var value unmarshaler
-	if err := json.Unmarshal(data, &value); err != nil {
-		return err
-	}
-	*r = ResponseStr(value)
-	extraProperties, err := internal.ExtractExtraProperties(data, *r)
-	if err != nil {
-		return err
-	}
-	r.extraProperties = extraProperties
-	r.rawJSON = json.RawMessage(data)
-	return nil
-}
-
-func (r *ResponseStr) MarshalJSON() ([]byte, error) {
-	type embed ResponseStr
-	var marshaler = struct {
-		embed
-	}{
-		embed: embed(*r),
-	}
-	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
-	return json.Marshal(explicitMarshaler)
-}
-
-func (r *ResponseStr) String() string {
 	if len(r.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
 			return value
@@ -1583,14 +1609,17 @@ func (s *ShellCreateSessionResponse) String() string {
 // Process termination result model
 var (
 	shellKillResultFieldStatus     = big.NewInt(1 << 0)
-	shellKillResultFieldReturncode = big.NewInt(1 << 1)
+	shellKillResultFieldExitCode   = big.NewInt(1 << 1)
+	shellKillResultFieldReturncode = big.NewInt(1 << 2)
 )
 
 type ShellKillResult struct {
 	// Process status
 	Status BashCommandStatus `json:"status" url:"status"`
-	// Process return code
-	Returncode int `json:"returncode" url:"returncode"`
+	// Process exit code before termination, None if process was still running
+	ExitCode *int `json:"exit_code,omitempty" url:"exit_code,omitempty"`
+	// Deprecated: use exit_code instead. Kept for backward compatibility.
+	Returncode *int `json:"returncode,omitempty" url:"returncode,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1606,9 +1635,16 @@ func (s *ShellKillResult) GetStatus() BashCommandStatus {
 	return s.Status
 }
 
-func (s *ShellKillResult) GetReturncode() int {
+func (s *ShellKillResult) GetExitCode() *int {
 	if s == nil {
-		return 0
+		return nil
+	}
+	return s.ExitCode
+}
+
+func (s *ShellKillResult) GetReturncode() *int {
+	if s == nil {
+		return nil
 	}
 	return s.Returncode
 }
@@ -1631,9 +1667,16 @@ func (s *ShellKillResult) SetStatus(status BashCommandStatus) {
 	s.require(shellKillResultFieldStatus)
 }
 
+// SetExitCode sets the ExitCode field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellKillResult) SetExitCode(exitCode *int) {
+	s.ExitCode = exitCode
+	s.require(shellKillResultFieldExitCode)
+}
+
 // SetReturncode sets the Returncode field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
-func (s *ShellKillResult) SetReturncode(returncode int) {
+func (s *ShellKillResult) SetReturncode(returncode *int) {
 	s.Returncode = returncode
 	s.require(shellKillResultFieldReturncode)
 }

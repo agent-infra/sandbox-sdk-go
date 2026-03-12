@@ -121,6 +121,40 @@ func (c *Client) FindFiles(
 	return response.Body, nil
 }
 
+// Multi-file content search (grep) with regex or fixed string support
+func (c *Client) GrepFiles(
+	ctx context.Context,
+	request *sandboxsdkgo.FileGrepRequest,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseFileGrepResult, error) {
+	response, err := c.WithRawResponse.GrepFiles(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Enhanced file glob matching with optional metadata
+func (c *Client) GlobFiles(
+	ctx context.Context,
+	request *sandboxsdkgo.FileGlobRequest,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseFileGlobResult, error) {
+	response, err := c.WithRawResponse.GlobFiles(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
 // Upload file using streaming
 func (c *Client) UploadFile(
 	ctx context.Context,

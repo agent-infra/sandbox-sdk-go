@@ -72,6 +72,238 @@ func (f *FileFindRequest) SetGlob(glob string) {
 }
 
 var (
+	fileGlobRequestFieldPath            = big.NewInt(1 << 0)
+	fileGlobRequestFieldPattern         = big.NewInt(1 << 1)
+	fileGlobRequestFieldExclude         = big.NewInt(1 << 2)
+	fileGlobRequestFieldIncludeHidden   = big.NewInt(1 << 3)
+	fileGlobRequestFieldFilesOnly       = big.NewInt(1 << 4)
+	fileGlobRequestFieldIncludeMetadata = big.NewInt(1 << 5)
+	fileGlobRequestFieldMaxResults      = big.NewInt(1 << 6)
+	fileGlobRequestFieldSortBy          = big.NewInt(1 << 7)
+	fileGlobRequestFieldSortDesc        = big.NewInt(1 << 8)
+)
+
+type FileGlobRequest struct {
+	// Base directory path
+	Path string `json:"path" url:"-"`
+	// Glob pattern (**, *, ?, [...])
+	Pattern string `json:"pattern" url:"-"`
+	// Glob patterns to exclude
+	Exclude []string `json:"exclude,omitempty" url:"-"`
+	// Whether to include hidden files
+	IncludeHidden *bool `json:"include_hidden,omitempty" url:"-"`
+	// Only return files (not directories)
+	FilesOnly *bool `json:"files_only,omitempty" url:"-"`
+	// Whether to include size and modified time
+	IncludeMetadata *bool `json:"include_metadata,omitempty" url:"-"`
+	// Maximum number of results
+	MaxResults *int `json:"max_results,omitempty" url:"-"`
+	// Sort by: path, name, size, modified
+	SortBy *string `json:"sort_by,omitempty" url:"-"`
+	// Sort in descending order
+	SortDesc *bool `json:"sort_desc,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (f *FileGlobRequest) require(field *big.Int) {
+	if f.explicitFields == nil {
+		f.explicitFields = big.NewInt(0)
+	}
+	f.explicitFields.Or(f.explicitFields, field)
+}
+
+// SetPath sets the Path field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobRequest) SetPath(path string) {
+	f.Path = path
+	f.require(fileGlobRequestFieldPath)
+}
+
+// SetPattern sets the Pattern field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobRequest) SetPattern(pattern string) {
+	f.Pattern = pattern
+	f.require(fileGlobRequestFieldPattern)
+}
+
+// SetExclude sets the Exclude field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobRequest) SetExclude(exclude []string) {
+	f.Exclude = exclude
+	f.require(fileGlobRequestFieldExclude)
+}
+
+// SetIncludeHidden sets the IncludeHidden field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobRequest) SetIncludeHidden(includeHidden *bool) {
+	f.IncludeHidden = includeHidden
+	f.require(fileGlobRequestFieldIncludeHidden)
+}
+
+// SetFilesOnly sets the FilesOnly field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobRequest) SetFilesOnly(filesOnly *bool) {
+	f.FilesOnly = filesOnly
+	f.require(fileGlobRequestFieldFilesOnly)
+}
+
+// SetIncludeMetadata sets the IncludeMetadata field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobRequest) SetIncludeMetadata(includeMetadata *bool) {
+	f.IncludeMetadata = includeMetadata
+	f.require(fileGlobRequestFieldIncludeMetadata)
+}
+
+// SetMaxResults sets the MaxResults field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobRequest) SetMaxResults(maxResults *int) {
+	f.MaxResults = maxResults
+	f.require(fileGlobRequestFieldMaxResults)
+}
+
+// SetSortBy sets the SortBy field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobRequest) SetSortBy(sortBy *string) {
+	f.SortBy = sortBy
+	f.require(fileGlobRequestFieldSortBy)
+}
+
+// SetSortDesc sets the SortDesc field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobRequest) SetSortDesc(sortDesc *bool) {
+	f.SortDesc = sortDesc
+	f.require(fileGlobRequestFieldSortDesc)
+}
+
+var (
+	fileGrepRequestFieldPath            = big.NewInt(1 << 0)
+	fileGrepRequestFieldPattern         = big.NewInt(1 << 1)
+	fileGrepRequestFieldInclude         = big.NewInt(1 << 2)
+	fileGrepRequestFieldExclude         = big.NewInt(1 << 3)
+	fileGrepRequestFieldCaseInsensitive = big.NewInt(1 << 4)
+	fileGrepRequestFieldFixedStrings    = big.NewInt(1 << 5)
+	fileGrepRequestFieldContextBefore   = big.NewInt(1 << 6)
+	fileGrepRequestFieldContextAfter    = big.NewInt(1 << 7)
+	fileGrepRequestFieldMaxResults      = big.NewInt(1 << 8)
+	fileGrepRequestFieldMaxFileSize     = big.NewInt(1 << 9)
+	fileGrepRequestFieldRecursive       = big.NewInt(1 << 10)
+)
+
+type FileGrepRequest struct {
+	// Directory path to search
+	Path string `json:"path" url:"-"`
+	// Search pattern (regex or fixed string)
+	Pattern string `json:"pattern" url:"-"`
+	// File glob filters to include (e.g., ["*.py", "*.ts"])
+	Include []string `json:"include,omitempty" url:"-"`
+	// Glob patterns to exclude (e.g., ["node_modules", "*.min.js"])
+	Exclude []string `json:"exclude,omitempty" url:"-"`
+	// Case insensitive search
+	CaseInsensitive *bool `json:"case_insensitive,omitempty" url:"-"`
+	// Treat pattern as literal string, not regex
+	FixedStrings *bool `json:"fixed_strings,omitempty" url:"-"`
+	// Number of lines before each match (-B)
+	ContextBefore *int `json:"context_before,omitempty" url:"-"`
+	// Number of lines after each match (-A)
+	ContextAfter *int `json:"context_after,omitempty" url:"-"`
+	// Maximum number of matches to return
+	MaxResults *int `json:"max_results,omitempty" url:"-"`
+	// Skip files larger than this size (e.g., 1M, 500K)
+	MaxFileSize *string `json:"max_file_size,omitempty" url:"-"`
+	// Search recursively
+	Recursive *bool `json:"recursive,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (f *FileGrepRequest) require(field *big.Int) {
+	if f.explicitFields == nil {
+		f.explicitFields = big.NewInt(0)
+	}
+	f.explicitFields.Or(f.explicitFields, field)
+}
+
+// SetPath sets the Path field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetPath(path string) {
+	f.Path = path
+	f.require(fileGrepRequestFieldPath)
+}
+
+// SetPattern sets the Pattern field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetPattern(pattern string) {
+	f.Pattern = pattern
+	f.require(fileGrepRequestFieldPattern)
+}
+
+// SetInclude sets the Include field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetInclude(include []string) {
+	f.Include = include
+	f.require(fileGrepRequestFieldInclude)
+}
+
+// SetExclude sets the Exclude field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetExclude(exclude []string) {
+	f.Exclude = exclude
+	f.require(fileGrepRequestFieldExclude)
+}
+
+// SetCaseInsensitive sets the CaseInsensitive field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetCaseInsensitive(caseInsensitive *bool) {
+	f.CaseInsensitive = caseInsensitive
+	f.require(fileGrepRequestFieldCaseInsensitive)
+}
+
+// SetFixedStrings sets the FixedStrings field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetFixedStrings(fixedStrings *bool) {
+	f.FixedStrings = fixedStrings
+	f.require(fileGrepRequestFieldFixedStrings)
+}
+
+// SetContextBefore sets the ContextBefore field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetContextBefore(contextBefore *int) {
+	f.ContextBefore = contextBefore
+	f.require(fileGrepRequestFieldContextBefore)
+}
+
+// SetContextAfter sets the ContextAfter field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetContextAfter(contextAfter *int) {
+	f.ContextAfter = contextAfter
+	f.require(fileGrepRequestFieldContextAfter)
+}
+
+// SetMaxResults sets the MaxResults field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetMaxResults(maxResults *int) {
+	f.MaxResults = maxResults
+	f.require(fileGrepRequestFieldMaxResults)
+}
+
+// SetMaxFileSize sets the MaxFileSize field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetMaxFileSize(maxFileSize *string) {
+	f.MaxFileSize = maxFileSize
+	f.require(fileGrepRequestFieldMaxFileSize)
+}
+
+// SetRecursive sets the Recursive field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetRecursive(recursive *bool) {
+	f.Recursive = recursive
+	f.require(fileGrepRequestFieldRecursive)
+}
+
+var (
 	fileListRequestFieldPath               = big.NewInt(1 << 0)
 	fileListRequestFieldRecursive          = big.NewInt(1 << 1)
 	fileListRequestFieldShowHidden         = big.NewInt(1 << 2)
@@ -336,14 +568,19 @@ func (f *FileSearchRequest) SetSudo(sudo *bool) {
 }
 
 var (
-	strReplaceEditorRequestFieldCommand     = big.NewInt(1 << 0)
-	strReplaceEditorRequestFieldPath        = big.NewInt(1 << 1)
-	strReplaceEditorRequestFieldFileText    = big.NewInt(1 << 2)
-	strReplaceEditorRequestFieldOldStr      = big.NewInt(1 << 3)
-	strReplaceEditorRequestFieldNewStr      = big.NewInt(1 << 4)
-	strReplaceEditorRequestFieldInsertLine  = big.NewInt(1 << 5)
-	strReplaceEditorRequestFieldViewRange   = big.NewInt(1 << 6)
-	strReplaceEditorRequestFieldReplaceMode = big.NewInt(1 << 7)
+	strReplaceEditorRequestFieldCommand        = big.NewInt(1 << 0)
+	strReplaceEditorRequestFieldPath           = big.NewInt(1 << 1)
+	strReplaceEditorRequestFieldFileText       = big.NewInt(1 << 2)
+	strReplaceEditorRequestFieldOldStr         = big.NewInt(1 << 3)
+	strReplaceEditorRequestFieldNewStr         = big.NewInt(1 << 4)
+	strReplaceEditorRequestFieldInsertLine     = big.NewInt(1 << 5)
+	strReplaceEditorRequestFieldViewRange      = big.NewInt(1 << 6)
+	strReplaceEditorRequestFieldReplaceMode    = big.NewInt(1 << 7)
+	strReplaceEditorRequestFieldPageRange      = big.NewInt(1 << 8)
+	strReplaceEditorRequestFieldSheetName      = big.NewInt(1 << 9)
+	strReplaceEditorRequestFieldRowRange       = big.NewInt(1 << 10)
+	strReplaceEditorRequestFieldSlideRange     = big.NewInt(1 << 11)
+	strReplaceEditorRequestFieldEnableMetadata = big.NewInt(1 << 12)
 )
 
 type StrReplaceEditorRequest struct {
@@ -363,6 +600,16 @@ type StrReplaceEditorRequest struct {
 	ViewRange []int `json:"view_range,omitempty" url:"-"`
 	// Optional parameter of `str_replace` command. When specified, controls how multiple occurrences are handled: 'ALL' replaces all occurrences, 'FIRST' replaces only the first, 'LAST' replaces only the last. If not specified, requires unique match (original behavior).
 	ReplaceMode *StrReplaceEditorRequestReplaceMode `json:"replace_mode,omitempty" url:"-"`
+	// Optional parameter for `view` command on PDF files. Specifies page range [start, end] (1-indexed). E.g., [1, 5] reads pages 1-5.
+	PageRange []int `json:"page_range,omitempty" url:"-"`
+	// Optional parameter for `view` command on Excel files. Specifies which sheet to read. If not provided, all sheets are returned.
+	SheetName *string `json:"sheet_name,omitempty" url:"-"`
+	// Optional parameter for `view` command on Excel files. Specifies row range [start, end] (1-indexed). E.g., [1, 100] reads rows 1-100.
+	RowRange []int `json:"row_range,omitempty" url:"-"`
+	// Optional parameter for `view` command on PPTX files. Specifies slide range [start, end] (1-indexed). E.g., [1, 5] reads slides 1-5.
+	SlideRange []int `json:"slide_range,omitempty" url:"-"`
+	// Optional parameter for `view` command. If true, returns file metadata (total pages, sheets, slides, etc.) in the response.
+	EnableMetadata *bool `json:"enable_metadata,omitempty" url:"-"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -429,6 +676,41 @@ func (s *StrReplaceEditorRequest) SetViewRange(viewRange []int) {
 func (s *StrReplaceEditorRequest) SetReplaceMode(replaceMode *StrReplaceEditorRequestReplaceMode) {
 	s.ReplaceMode = replaceMode
 	s.require(strReplaceEditorRequestFieldReplaceMode)
+}
+
+// SetPageRange sets the PageRange field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *StrReplaceEditorRequest) SetPageRange(pageRange []int) {
+	s.PageRange = pageRange
+	s.require(strReplaceEditorRequestFieldPageRange)
+}
+
+// SetSheetName sets the SheetName field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *StrReplaceEditorRequest) SetSheetName(sheetName *string) {
+	s.SheetName = sheetName
+	s.require(strReplaceEditorRequestFieldSheetName)
+}
+
+// SetRowRange sets the RowRange field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *StrReplaceEditorRequest) SetRowRange(rowRange []int) {
+	s.RowRange = rowRange
+	s.require(strReplaceEditorRequestFieldRowRange)
+}
+
+// SetSlideRange sets the SlideRange field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *StrReplaceEditorRequest) SetSlideRange(slideRange []int) {
+	s.SlideRange = slideRange
+	s.require(strReplaceEditorRequestFieldSlideRange)
+}
+
+// SetEnableMetadata sets the EnableMetadata field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *StrReplaceEditorRequest) SetEnableMetadata(enableMetadata *bool) {
+	s.EnableMetadata = enableMetadata
+	s.require(strReplaceEditorRequestFieldEnableMetadata)
 }
 
 // File content encoding type
@@ -543,6 +825,336 @@ func (f *FileFindResult) MarshalJSON() ([]byte, error) {
 }
 
 func (f *FileFindResult) String() string {
+	if len(f.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(f.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(f); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", f)
+}
+
+// Enhanced glob result
+var (
+	fileGlobResultFieldPath       = big.NewInt(1 << 0)
+	fileGlobResultFieldPattern    = big.NewInt(1 << 1)
+	fileGlobResultFieldFiles      = big.NewInt(1 << 2)
+	fileGlobResultFieldTotalCount = big.NewInt(1 << 3)
+	fileGlobResultFieldTruncated  = big.NewInt(1 << 4)
+)
+
+type FileGlobResult struct {
+	// Base directory path
+	Path string `json:"path" url:"path"`
+	// Glob pattern used
+	Pattern string `json:"pattern" url:"pattern"`
+	// List of matched files
+	Files []*GlobFileInfo `json:"files,omitempty" url:"files,omitempty"`
+	// Total number of matches
+	TotalCount *int `json:"total_count,omitempty" url:"total_count,omitempty"`
+	// Whether results were truncated
+	Truncated *bool `json:"truncated,omitempty" url:"truncated,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (f *FileGlobResult) GetPath() string {
+	if f == nil {
+		return ""
+	}
+	return f.Path
+}
+
+func (f *FileGlobResult) GetPattern() string {
+	if f == nil {
+		return ""
+	}
+	return f.Pattern
+}
+
+func (f *FileGlobResult) GetFiles() []*GlobFileInfo {
+	if f == nil {
+		return nil
+	}
+	return f.Files
+}
+
+func (f *FileGlobResult) GetTotalCount() *int {
+	if f == nil {
+		return nil
+	}
+	return f.TotalCount
+}
+
+func (f *FileGlobResult) GetTruncated() *bool {
+	if f == nil {
+		return nil
+	}
+	return f.Truncated
+}
+
+func (f *FileGlobResult) GetExtraProperties() map[string]interface{} {
+	return f.extraProperties
+}
+
+func (f *FileGlobResult) require(field *big.Int) {
+	if f.explicitFields == nil {
+		f.explicitFields = big.NewInt(0)
+	}
+	f.explicitFields.Or(f.explicitFields, field)
+}
+
+// SetPath sets the Path field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobResult) SetPath(path string) {
+	f.Path = path
+	f.require(fileGlobResultFieldPath)
+}
+
+// SetPattern sets the Pattern field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobResult) SetPattern(pattern string) {
+	f.Pattern = pattern
+	f.require(fileGlobResultFieldPattern)
+}
+
+// SetFiles sets the Files field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobResult) SetFiles(files []*GlobFileInfo) {
+	f.Files = files
+	f.require(fileGlobResultFieldFiles)
+}
+
+// SetTotalCount sets the TotalCount field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobResult) SetTotalCount(totalCount *int) {
+	f.TotalCount = totalCount
+	f.require(fileGlobResultFieldTotalCount)
+}
+
+// SetTruncated sets the Truncated field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGlobResult) SetTruncated(truncated *bool) {
+	f.Truncated = truncated
+	f.require(fileGlobResultFieldTruncated)
+}
+
+func (f *FileGlobResult) UnmarshalJSON(data []byte) error {
+	type unmarshaler FileGlobResult
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*f = FileGlobResult(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *f)
+	if err != nil {
+		return err
+	}
+	f.extraProperties = extraProperties
+	f.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (f *FileGlobResult) MarshalJSON() ([]byte, error) {
+	type embed FileGlobResult
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*f),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, f.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (f *FileGlobResult) String() string {
+	if len(f.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(f.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(f); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", f)
+}
+
+// Multi-file grep result
+var (
+	fileGrepResultFieldPath          = big.NewInt(1 << 0)
+	fileGrepResultFieldPattern       = big.NewInt(1 << 1)
+	fileGrepResultFieldMatches       = big.NewInt(1 << 2)
+	fileGrepResultFieldMatchCount    = big.NewInt(1 << 3)
+	fileGrepResultFieldFilesSearched = big.NewInt(1 << 4)
+	fileGrepResultFieldFilesMatched  = big.NewInt(1 << 5)
+	fileGrepResultFieldTruncated     = big.NewInt(1 << 6)
+)
+
+type FileGrepResult struct {
+	// Search directory path
+	Path string `json:"path" url:"path"`
+	// Search pattern used
+	Pattern string `json:"pattern" url:"pattern"`
+	// List of matches
+	Matches []*GrepMatch `json:"matches,omitempty" url:"matches,omitempty"`
+	// Total number of matches
+	MatchCount *int `json:"match_count,omitempty" url:"match_count,omitempty"`
+	// Number of files searched
+	FilesSearched *int `json:"files_searched,omitempty" url:"files_searched,omitempty"`
+	// Number of files with matches
+	FilesMatched *int `json:"files_matched,omitempty" url:"files_matched,omitempty"`
+	// Whether results were truncated
+	Truncated *bool `json:"truncated,omitempty" url:"truncated,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (f *FileGrepResult) GetPath() string {
+	if f == nil {
+		return ""
+	}
+	return f.Path
+}
+
+func (f *FileGrepResult) GetPattern() string {
+	if f == nil {
+		return ""
+	}
+	return f.Pattern
+}
+
+func (f *FileGrepResult) GetMatches() []*GrepMatch {
+	if f == nil {
+		return nil
+	}
+	return f.Matches
+}
+
+func (f *FileGrepResult) GetMatchCount() *int {
+	if f == nil {
+		return nil
+	}
+	return f.MatchCount
+}
+
+func (f *FileGrepResult) GetFilesSearched() *int {
+	if f == nil {
+		return nil
+	}
+	return f.FilesSearched
+}
+
+func (f *FileGrepResult) GetFilesMatched() *int {
+	if f == nil {
+		return nil
+	}
+	return f.FilesMatched
+}
+
+func (f *FileGrepResult) GetTruncated() *bool {
+	if f == nil {
+		return nil
+	}
+	return f.Truncated
+}
+
+func (f *FileGrepResult) GetExtraProperties() map[string]interface{} {
+	return f.extraProperties
+}
+
+func (f *FileGrepResult) require(field *big.Int) {
+	if f.explicitFields == nil {
+		f.explicitFields = big.NewInt(0)
+	}
+	f.explicitFields.Or(f.explicitFields, field)
+}
+
+// SetPath sets the Path field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepResult) SetPath(path string) {
+	f.Path = path
+	f.require(fileGrepResultFieldPath)
+}
+
+// SetPattern sets the Pattern field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepResult) SetPattern(pattern string) {
+	f.Pattern = pattern
+	f.require(fileGrepResultFieldPattern)
+}
+
+// SetMatches sets the Matches field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepResult) SetMatches(matches []*GrepMatch) {
+	f.Matches = matches
+	f.require(fileGrepResultFieldMatches)
+}
+
+// SetMatchCount sets the MatchCount field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepResult) SetMatchCount(matchCount *int) {
+	f.MatchCount = matchCount
+	f.require(fileGrepResultFieldMatchCount)
+}
+
+// SetFilesSearched sets the FilesSearched field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepResult) SetFilesSearched(filesSearched *int) {
+	f.FilesSearched = filesSearched
+	f.require(fileGrepResultFieldFilesSearched)
+}
+
+// SetFilesMatched sets the FilesMatched field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepResult) SetFilesMatched(filesMatched *int) {
+	f.FilesMatched = filesMatched
+	f.require(fileGrepResultFieldFilesMatched)
+}
+
+// SetTruncated sets the Truncated field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepResult) SetTruncated(truncated *bool) {
+	f.Truncated = truncated
+	f.require(fileGrepResultFieldTruncated)
+}
+
+func (f *FileGrepResult) UnmarshalJSON(data []byte) error {
+	type unmarshaler FileGrepResult
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*f = FileGrepResult(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *f)
+	if err != nil {
+		return err
+	}
+	f.extraProperties = extraProperties
+	f.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (f *FileGrepResult) MarshalJSON() ([]byte, error) {
+	type embed FileGrepResult
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*f),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, f.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (f *FileGrepResult) String() string {
 	if len(f.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(f.rawJSON); err == nil {
 			return value
@@ -1403,10 +2015,307 @@ func (f *FileWriteResult) String() string {
 	return fmt.Sprintf("%#v", f)
 }
 
+// Glob matched file info
+var (
+	globFileInfoFieldPath         = big.NewInt(1 << 0)
+	globFileInfoFieldName         = big.NewInt(1 << 1)
+	globFileInfoFieldIsDirectory  = big.NewInt(1 << 2)
+	globFileInfoFieldSize         = big.NewInt(1 << 3)
+	globFileInfoFieldModifiedTime = big.NewInt(1 << 4)
+)
+
+type GlobFileInfo struct {
+	// Full file path
+	Path string `json:"path" url:"path"`
+	// File name
+	Name string `json:"name" url:"name"`
+	// Whether it's a directory
+	IsDirectory *bool `json:"is_directory,omitempty" url:"is_directory,omitempty"`
+	// File size in bytes
+	Size *int `json:"size,omitempty" url:"size,omitempty"`
+	// Last modified time (ISO format)
+	ModifiedTime *string `json:"modified_time,omitempty" url:"modified_time,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (g *GlobFileInfo) GetPath() string {
+	if g == nil {
+		return ""
+	}
+	return g.Path
+}
+
+func (g *GlobFileInfo) GetName() string {
+	if g == nil {
+		return ""
+	}
+	return g.Name
+}
+
+func (g *GlobFileInfo) GetIsDirectory() *bool {
+	if g == nil {
+		return nil
+	}
+	return g.IsDirectory
+}
+
+func (g *GlobFileInfo) GetSize() *int {
+	if g == nil {
+		return nil
+	}
+	return g.Size
+}
+
+func (g *GlobFileInfo) GetModifiedTime() *string {
+	if g == nil {
+		return nil
+	}
+	return g.ModifiedTime
+}
+
+func (g *GlobFileInfo) GetExtraProperties() map[string]interface{} {
+	return g.extraProperties
+}
+
+func (g *GlobFileInfo) require(field *big.Int) {
+	if g.explicitFields == nil {
+		g.explicitFields = big.NewInt(0)
+	}
+	g.explicitFields.Or(g.explicitFields, field)
+}
+
+// SetPath sets the Path field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (g *GlobFileInfo) SetPath(path string) {
+	g.Path = path
+	g.require(globFileInfoFieldPath)
+}
+
+// SetName sets the Name field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (g *GlobFileInfo) SetName(name string) {
+	g.Name = name
+	g.require(globFileInfoFieldName)
+}
+
+// SetIsDirectory sets the IsDirectory field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (g *GlobFileInfo) SetIsDirectory(isDirectory *bool) {
+	g.IsDirectory = isDirectory
+	g.require(globFileInfoFieldIsDirectory)
+}
+
+// SetSize sets the Size field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (g *GlobFileInfo) SetSize(size *int) {
+	g.Size = size
+	g.require(globFileInfoFieldSize)
+}
+
+// SetModifiedTime sets the ModifiedTime field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (g *GlobFileInfo) SetModifiedTime(modifiedTime *string) {
+	g.ModifiedTime = modifiedTime
+	g.require(globFileInfoFieldModifiedTime)
+}
+
+func (g *GlobFileInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler GlobFileInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*g = GlobFileInfo(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *g)
+	if err != nil {
+		return err
+	}
+	g.extraProperties = extraProperties
+	g.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (g *GlobFileInfo) MarshalJSON() ([]byte, error) {
+	type embed GlobFileInfo
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*g),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, g.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (g *GlobFileInfo) String() string {
+	if len(g.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(g.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(g); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", g)
+}
+
+// Single grep match
+var (
+	grepMatchFieldFile          = big.NewInt(1 << 0)
+	grepMatchFieldLineNumber    = big.NewInt(1 << 1)
+	grepMatchFieldLineContent   = big.NewInt(1 << 2)
+	grepMatchFieldContextBefore = big.NewInt(1 << 3)
+	grepMatchFieldContextAfter  = big.NewInt(1 << 4)
+)
+
+type GrepMatch struct {
+	// File path containing the match
+	File string `json:"file" url:"file"`
+	// Line number (1-based)
+	LineNumber int `json:"line_number" url:"line_number"`
+	// Content of the matched line
+	LineContent string `json:"line_content" url:"line_content"`
+	// Lines before the match
+	ContextBefore []string `json:"context_before,omitempty" url:"context_before,omitempty"`
+	// Lines after the match
+	ContextAfter []string `json:"context_after,omitempty" url:"context_after,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (g *GrepMatch) GetFile() string {
+	if g == nil {
+		return ""
+	}
+	return g.File
+}
+
+func (g *GrepMatch) GetLineNumber() int {
+	if g == nil {
+		return 0
+	}
+	return g.LineNumber
+}
+
+func (g *GrepMatch) GetLineContent() string {
+	if g == nil {
+		return ""
+	}
+	return g.LineContent
+}
+
+func (g *GrepMatch) GetContextBefore() []string {
+	if g == nil {
+		return nil
+	}
+	return g.ContextBefore
+}
+
+func (g *GrepMatch) GetContextAfter() []string {
+	if g == nil {
+		return nil
+	}
+	return g.ContextAfter
+}
+
+func (g *GrepMatch) GetExtraProperties() map[string]interface{} {
+	return g.extraProperties
+}
+
+func (g *GrepMatch) require(field *big.Int) {
+	if g.explicitFields == nil {
+		g.explicitFields = big.NewInt(0)
+	}
+	g.explicitFields.Or(g.explicitFields, field)
+}
+
+// SetFile sets the File field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (g *GrepMatch) SetFile(file string) {
+	g.File = file
+	g.require(grepMatchFieldFile)
+}
+
+// SetLineNumber sets the LineNumber field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (g *GrepMatch) SetLineNumber(lineNumber int) {
+	g.LineNumber = lineNumber
+	g.require(grepMatchFieldLineNumber)
+}
+
+// SetLineContent sets the LineContent field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (g *GrepMatch) SetLineContent(lineContent string) {
+	g.LineContent = lineContent
+	g.require(grepMatchFieldLineContent)
+}
+
+// SetContextBefore sets the ContextBefore field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (g *GrepMatch) SetContextBefore(contextBefore []string) {
+	g.ContextBefore = contextBefore
+	g.require(grepMatchFieldContextBefore)
+}
+
+// SetContextAfter sets the ContextAfter field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (g *GrepMatch) SetContextAfter(contextAfter []string) {
+	g.ContextAfter = contextAfter
+	g.require(grepMatchFieldContextAfter)
+}
+
+func (g *GrepMatch) UnmarshalJSON(data []byte) error {
+	type unmarshaler GrepMatch
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*g = GrepMatch(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *g)
+	if err != nil {
+		return err
+	}
+	g.extraProperties = extraProperties
+	g.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (g *GrepMatch) MarshalJSON() ([]byte, error) {
+	type embed GrepMatch
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*g),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, g.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (g *GrepMatch) String() string {
+	if len(g.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(g.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(g); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", g)
+}
+
 var (
 	responseFileFindResultFieldSuccess = big.NewInt(1 << 0)
 	responseFileFindResultFieldMessage = big.NewInt(1 << 1)
 	responseFileFindResultFieldData    = big.NewInt(1 << 2)
+	responseFileFindResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseFileFindResult struct {
@@ -1416,6 +2325,8 @@ type ResponseFileFindResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *FileFindResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1443,6 +2354,13 @@ func (r *ResponseFileFindResult) GetData() *FileFindResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseFileFindResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseFileFindResult) GetExtraProperties() map[string]interface{} {
@@ -1475,6 +2393,13 @@ func (r *ResponseFileFindResult) SetMessage(message *string) {
 func (r *ResponseFileFindResult) SetData(data *FileFindResult) {
 	r.Data = data
 	r.require(responseFileFindResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileFindResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseFileFindResultFieldHint)
 }
 
 func (r *ResponseFileFindResult) UnmarshalJSON(data []byte) error {
@@ -1517,9 +2442,270 @@ func (r *ResponseFileFindResult) String() string {
 }
 
 var (
+	responseFileGlobResultFieldSuccess = big.NewInt(1 << 0)
+	responseFileGlobResultFieldMessage = big.NewInt(1 << 1)
+	responseFileGlobResultFieldData    = big.NewInt(1 << 2)
+	responseFileGlobResultFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseFileGlobResult struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *FileGlobResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseFileGlobResult) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseFileGlobResult) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseFileGlobResult) GetData() *FileGlobResult {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseFileGlobResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseFileGlobResult) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseFileGlobResult) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileGlobResult) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseFileGlobResultFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileGlobResult) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseFileGlobResultFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileGlobResult) SetData(data *FileGlobResult) {
+	r.Data = data
+	r.require(responseFileGlobResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileGlobResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseFileGlobResultFieldHint)
+}
+
+func (r *ResponseFileGlobResult) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseFileGlobResult
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseFileGlobResult(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseFileGlobResult) MarshalJSON() ([]byte, error) {
+	type embed ResponseFileGlobResult
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseFileGlobResult) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseFileGrepResultFieldSuccess = big.NewInt(1 << 0)
+	responseFileGrepResultFieldMessage = big.NewInt(1 << 1)
+	responseFileGrepResultFieldData    = big.NewInt(1 << 2)
+	responseFileGrepResultFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseFileGrepResult struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *FileGrepResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseFileGrepResult) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseFileGrepResult) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseFileGrepResult) GetData() *FileGrepResult {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseFileGrepResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseFileGrepResult) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseFileGrepResult) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileGrepResult) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseFileGrepResultFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileGrepResult) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseFileGrepResultFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileGrepResult) SetData(data *FileGrepResult) {
+	r.Data = data
+	r.require(responseFileGrepResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileGrepResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseFileGrepResultFieldHint)
+}
+
+func (r *ResponseFileGrepResult) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseFileGrepResult
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseFileGrepResult(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseFileGrepResult) MarshalJSON() ([]byte, error) {
+	type embed ResponseFileGrepResult
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseFileGrepResult) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
 	responseFileListResultFieldSuccess = big.NewInt(1 << 0)
 	responseFileListResultFieldMessage = big.NewInt(1 << 1)
 	responseFileListResultFieldData    = big.NewInt(1 << 2)
+	responseFileListResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseFileListResult struct {
@@ -1529,6 +2715,8 @@ type ResponseFileListResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *FileListResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1556,6 +2744,13 @@ func (r *ResponseFileListResult) GetData() *FileListResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseFileListResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseFileListResult) GetExtraProperties() map[string]interface{} {
@@ -1588,6 +2783,13 @@ func (r *ResponseFileListResult) SetMessage(message *string) {
 func (r *ResponseFileListResult) SetData(data *FileListResult) {
 	r.Data = data
 	r.require(responseFileListResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileListResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseFileListResultFieldHint)
 }
 
 func (r *ResponseFileListResult) UnmarshalJSON(data []byte) error {
@@ -1633,6 +2835,7 @@ var (
 	responseFileReadResultFieldSuccess = big.NewInt(1 << 0)
 	responseFileReadResultFieldMessage = big.NewInt(1 << 1)
 	responseFileReadResultFieldData    = big.NewInt(1 << 2)
+	responseFileReadResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseFileReadResult struct {
@@ -1642,6 +2845,8 @@ type ResponseFileReadResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *FileReadResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1669,6 +2874,13 @@ func (r *ResponseFileReadResult) GetData() *FileReadResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseFileReadResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseFileReadResult) GetExtraProperties() map[string]interface{} {
@@ -1701,6 +2913,13 @@ func (r *ResponseFileReadResult) SetMessage(message *string) {
 func (r *ResponseFileReadResult) SetData(data *FileReadResult) {
 	r.Data = data
 	r.require(responseFileReadResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileReadResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseFileReadResultFieldHint)
 }
 
 func (r *ResponseFileReadResult) UnmarshalJSON(data []byte) error {
@@ -1746,6 +2965,7 @@ var (
 	responseFileReplaceResultFieldSuccess = big.NewInt(1 << 0)
 	responseFileReplaceResultFieldMessage = big.NewInt(1 << 1)
 	responseFileReplaceResultFieldData    = big.NewInt(1 << 2)
+	responseFileReplaceResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseFileReplaceResult struct {
@@ -1755,6 +2975,8 @@ type ResponseFileReplaceResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *FileReplaceResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1782,6 +3004,13 @@ func (r *ResponseFileReplaceResult) GetData() *FileReplaceResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseFileReplaceResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseFileReplaceResult) GetExtraProperties() map[string]interface{} {
@@ -1814,6 +3043,13 @@ func (r *ResponseFileReplaceResult) SetMessage(message *string) {
 func (r *ResponseFileReplaceResult) SetData(data *FileReplaceResult) {
 	r.Data = data
 	r.require(responseFileReplaceResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileReplaceResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseFileReplaceResultFieldHint)
 }
 
 func (r *ResponseFileReplaceResult) UnmarshalJSON(data []byte) error {
@@ -1859,6 +3095,7 @@ var (
 	responseFileSearchResultFieldSuccess = big.NewInt(1 << 0)
 	responseFileSearchResultFieldMessage = big.NewInt(1 << 1)
 	responseFileSearchResultFieldData    = big.NewInt(1 << 2)
+	responseFileSearchResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseFileSearchResult struct {
@@ -1868,6 +3105,8 @@ type ResponseFileSearchResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *FileSearchResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1895,6 +3134,13 @@ func (r *ResponseFileSearchResult) GetData() *FileSearchResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseFileSearchResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseFileSearchResult) GetExtraProperties() map[string]interface{} {
@@ -1927,6 +3173,13 @@ func (r *ResponseFileSearchResult) SetMessage(message *string) {
 func (r *ResponseFileSearchResult) SetData(data *FileSearchResult) {
 	r.Data = data
 	r.require(responseFileSearchResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileSearchResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseFileSearchResultFieldHint)
 }
 
 func (r *ResponseFileSearchResult) UnmarshalJSON(data []byte) error {
@@ -1972,6 +3225,7 @@ var (
 	responseFileUploadResultFieldSuccess = big.NewInt(1 << 0)
 	responseFileUploadResultFieldMessage = big.NewInt(1 << 1)
 	responseFileUploadResultFieldData    = big.NewInt(1 << 2)
+	responseFileUploadResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseFileUploadResult struct {
@@ -1981,6 +3235,8 @@ type ResponseFileUploadResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *FileUploadResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -2008,6 +3264,13 @@ func (r *ResponseFileUploadResult) GetData() *FileUploadResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseFileUploadResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseFileUploadResult) GetExtraProperties() map[string]interface{} {
@@ -2040,6 +3303,13 @@ func (r *ResponseFileUploadResult) SetMessage(message *string) {
 func (r *ResponseFileUploadResult) SetData(data *FileUploadResult) {
 	r.Data = data
 	r.require(responseFileUploadResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileUploadResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseFileUploadResultFieldHint)
 }
 
 func (r *ResponseFileUploadResult) UnmarshalJSON(data []byte) error {
@@ -2085,6 +3355,7 @@ var (
 	responseFileWriteResultFieldSuccess = big.NewInt(1 << 0)
 	responseFileWriteResultFieldMessage = big.NewInt(1 << 1)
 	responseFileWriteResultFieldData    = big.NewInt(1 << 2)
+	responseFileWriteResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseFileWriteResult struct {
@@ -2094,6 +3365,8 @@ type ResponseFileWriteResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *FileWriteResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -2121,6 +3394,13 @@ func (r *ResponseFileWriteResult) GetData() *FileWriteResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseFileWriteResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseFileWriteResult) GetExtraProperties() map[string]interface{} {
@@ -2153,6 +3433,13 @@ func (r *ResponseFileWriteResult) SetMessage(message *string) {
 func (r *ResponseFileWriteResult) SetData(data *FileWriteResult) {
 	r.Data = data
 	r.require(responseFileWriteResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseFileWriteResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseFileWriteResultFieldHint)
 }
 
 func (r *ResponseFileWriteResult) UnmarshalJSON(data []byte) error {
@@ -2198,6 +3485,7 @@ var (
 	responseStrReplaceEditorResultFieldSuccess = big.NewInt(1 << 0)
 	responseStrReplaceEditorResultFieldMessage = big.NewInt(1 << 1)
 	responseStrReplaceEditorResultFieldData    = big.NewInt(1 << 2)
+	responseStrReplaceEditorResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseStrReplaceEditorResult struct {
@@ -2207,6 +3495,8 @@ type ResponseStrReplaceEditorResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *StrReplaceEditorResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -2234,6 +3524,13 @@ func (r *ResponseStrReplaceEditorResult) GetData() *StrReplaceEditorResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseStrReplaceEditorResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseStrReplaceEditorResult) GetExtraProperties() map[string]interface{} {
@@ -2266,6 +3563,13 @@ func (r *ResponseStrReplaceEditorResult) SetMessage(message *string) {
 func (r *ResponseStrReplaceEditorResult) SetData(data *StrReplaceEditorResult) {
 	r.Data = data
 	r.require(responseStrReplaceEditorResultFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseStrReplaceEditorResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseStrReplaceEditorResultFieldHint)
 }
 
 func (r *ResponseStrReplaceEditorResult) UnmarshalJSON(data []byte) error {
@@ -2315,6 +3619,7 @@ var (
 	strReplaceEditorResultFieldPrevExist  = big.NewInt(1 << 3)
 	strReplaceEditorResultFieldOldContent = big.NewInt(1 << 4)
 	strReplaceEditorResultFieldNewContent = big.NewInt(1 << 5)
+	strReplaceEditorResultFieldMetadata   = big.NewInt(1 << 6)
 )
 
 type StrReplaceEditorResult struct {
@@ -2330,6 +3635,8 @@ type StrReplaceEditorResult struct {
 	OldContent *string `json:"old_content,omitempty" url:"old_content,omitempty"`
 	// New file content after operation
 	NewContent *string `json:"new_content,omitempty" url:"new_content,omitempty"`
+	// File metadata (only returned when enable_metadata=true for binary files)
+	Metadata map[string]interface{} `json:"metadata,omitempty" url:"metadata,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -2378,6 +3685,13 @@ func (s *StrReplaceEditorResult) GetNewContent() *string {
 		return nil
 	}
 	return s.NewContent
+}
+
+func (s *StrReplaceEditorResult) GetMetadata() map[string]interface{} {
+	if s == nil {
+		return nil
+	}
+	return s.Metadata
 }
 
 func (s *StrReplaceEditorResult) GetExtraProperties() map[string]interface{} {
@@ -2431,6 +3745,13 @@ func (s *StrReplaceEditorResult) SetOldContent(oldContent *string) {
 func (s *StrReplaceEditorResult) SetNewContent(newContent *string) {
 	s.NewContent = newContent
 	s.require(strReplaceEditorResultFieldNewContent)
+}
+
+// SetMetadata sets the Metadata field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *StrReplaceEditorResult) SetMetadata(metadata map[string]interface{}) {
+	s.Metadata = metadata
+	s.require(strReplaceEditorResultFieldMetadata)
 }
 
 func (s *StrReplaceEditorResult) UnmarshalJSON(data []byte) error {

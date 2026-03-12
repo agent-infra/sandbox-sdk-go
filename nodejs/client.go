@@ -35,7 +35,16 @@ func NewClient(options *core.RequestOptions) *Client {
 // Execute JavaScript code using Node.js
 //
 // This endpoint allows you to execute JavaScript code and get results back.
-// Each request creates a fresh execution environment that's cleaned up automatically.
+//
+// For stateless execution (default):
+// - Each request creates a fresh execution environment
+// - Environment is cleaned up automatically after execution
+//
+// For stateful execution (stateful=True):
+// - Uses persistent REPL session that maintains state between requests
+// - Variables, functions, and imports persist across calls
+// - Returns session_id to continue the session in subsequent requests
+// - Supports async/await at top level
 func (c *Client) ExecuteCode(
 	ctx context.Context,
 	request *sandboxsdkgo.NodeJsExecuteRequest,
@@ -52,13 +61,114 @@ func (c *Client) ExecuteCode(
 	return response.Body, nil
 }
 
-// Get information about Node.js runtime and available languages
+// Get information about Node.js REPL runtime, including installed packages
+//
+// Returns Node.js version, npm version, and lists of installed packages
+// from both the runtime directory and global npm directory.
 func (c *Client) GetInfo(
 	ctx context.Context,
 	opts ...option.RequestOption,
 ) (*sandboxsdkgo.ResponseNodeJsRuntimeInfo, error) {
 	response, err := c.WithRawResponse.GetInfo(
 		ctx,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// List all active Node.js REPL sessions
+//
+// Returns information about all active sessions including their state,
+// working directory, and idle time.
+func (c *Client) ListSessions(
+	ctx context.Context,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseNodeJsSessionListResponse, error) {
+	response, err := c.WithRawResponse.ListSessions(
+		ctx,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Create a new Node.js REPL session
+//
+// Creates a new persistent REPL session with configurable working directory
+// and idle timeout. Use the returned session_id in subsequent execute requests.
+func (c *Client) CreateSession(
+	ctx context.Context,
+	request *sandboxsdkgo.NodeJsCreateSessionRequest,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseNodeJsCreateSessionResponse, error) {
+	response, err := c.WithRawResponse.CreateSession(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Get information about a specific Node.js REPL session
+//
+// Returns detailed information about a session including its state,
+// working directory, creation time, and idle time.
+func (c *Client) GetSession(
+	ctx context.Context,
+	sessionId string,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseNodeJsSessionResponse, error) {
+	response, err := c.WithRawResponse.GetSession(
+		ctx,
+		sessionId,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Delete a Node.js REPL session
+//
+// Terminates the session and releases all associated resources.
+func (c *Client) DeleteSession(
+	ctx context.Context,
+	sessionId string,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseNodeJsDeleteSessionResponse, error) {
+	response, err := c.WithRawResponse.DeleteSession(
+		ctx,
+		sessionId,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Update a Node.js REPL session configuration
+//
+// Updates session properties like maximum idle time or working directory.
+func (c *Client) UpdateSession(
+	ctx context.Context,
+	sessionId string,
+	request *sandboxsdkgo.NodeJsUpdateSessionRequest,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseNodeJsUpdateSessionResponse, error) {
+	response, err := c.WithRawResponse.UpdateSession(
+		ctx,
+		sessionId,
+		request,
 		opts...,
 	)
 	if err != nil {
