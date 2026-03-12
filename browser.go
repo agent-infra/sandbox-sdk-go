@@ -35,11 +35,12 @@ func (b *BrowserConfigRequest) SetResolution(resolution *Resolution) {
 	b.require(browserConfigRequestFieldResolution)
 }
 
+// Inner data for action response.
 var (
-	actionResponseFieldActionPerformed = big.NewInt(1 << 0)
+	actionDataFieldActionPerformed = big.NewInt(1 << 0)
 )
 
-type ActionResponse struct {
+type ActionData struct {
 	ActionPerformed string `json:"action_performed" url:"action_performed"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
@@ -50,22 +51,22 @@ type ActionResponse struct {
 	rawJSON         json.RawMessage
 }
 
-func (a *ActionResponse) GetActionPerformed() string {
+func (a *ActionData) GetActionPerformed() string {
 	if a == nil {
 		return ""
 	}
 	return a.ActionPerformed
 }
 
-func (a *ActionResponse) Status() string {
+func (a *ActionData) Status() string {
 	return a.status
 }
 
-func (a *ActionResponse) GetExtraProperties() map[string]interface{} {
+func (a *ActionData) GetExtraProperties() map[string]interface{} {
 	return a.extraProperties
 }
 
-func (a *ActionResponse) require(field *big.Int) {
+func (a *ActionData) require(field *big.Int) {
 	if a.explicitFields == nil {
 		a.explicitFields = big.NewInt(0)
 	}
@@ -74,13 +75,13 @@ func (a *ActionResponse) require(field *big.Int) {
 
 // SetActionPerformed sets the ActionPerformed field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
-func (a *ActionResponse) SetActionPerformed(actionPerformed string) {
+func (a *ActionData) SetActionPerformed(actionPerformed string) {
 	a.ActionPerformed = actionPerformed
-	a.require(actionResponseFieldActionPerformed)
+	a.require(actionDataFieldActionPerformed)
 }
 
-func (a *ActionResponse) UnmarshalJSON(data []byte) error {
-	type embed ActionResponse
+func (a *ActionData) UnmarshalJSON(data []byte) error {
+	type embed ActionData
 	var unmarshaler = struct {
 		embed
 		Status string `json:"status"`
@@ -90,7 +91,7 @@ func (a *ActionResponse) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &unmarshaler); err != nil {
 		return err
 	}
-	*a = ActionResponse(unmarshaler.embed)
+	*a = ActionData(unmarshaler.embed)
 	if unmarshaler.Status != "success" {
 		return fmt.Errorf("unexpected value for literal on type %T; expected %v got %v", a, "success", unmarshaler.Status)
 	}
@@ -104,14 +105,173 @@ func (a *ActionResponse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (a *ActionResponse) MarshalJSON() ([]byte, error) {
-	type embed ActionResponse
+func (a *ActionData) MarshalJSON() ([]byte, error) {
+	type embed ActionData
 	var marshaler = struct {
 		embed
 		Status string `json:"status"`
 	}{
 		embed:  embed(*a),
 		Status: "success",
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, a.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (a *ActionData) String() string {
+	if len(a.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(a.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(a); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", a)
+}
+
+// Response model for browser actions.
+//
+// Inherits from Response for unified API format, with backward compatibility:
+// - Old format: resp.json()['status'], resp.json()['action_performed']
+// - New format: resp.json()['success'], resp.json()['message'], resp.json()['data']
+var (
+	actionResponseFieldSuccess         = big.NewInt(1 << 0)
+	actionResponseFieldMessage         = big.NewInt(1 << 1)
+	actionResponseFieldData            = big.NewInt(1 << 2)
+	actionResponseFieldHint            = big.NewInt(1 << 3)
+	actionResponseFieldStatus          = big.NewInt(1 << 4)
+	actionResponseFieldActionPerformed = big.NewInt(1 << 5)
+)
+
+type ActionResponse struct {
+	// Whether the operation was successful
+	Success *bool   `json:"success,omitempty" url:"success,omitempty"`
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *ActionData `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint            *string `json:"hint,omitempty" url:"hint,omitempty"`
+	Status          *string `json:"status,omitempty" url:"status,omitempty"`
+	ActionPerformed *string `json:"action_performed,omitempty" url:"action_performed,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (a *ActionResponse) GetSuccess() *bool {
+	if a == nil {
+		return nil
+	}
+	return a.Success
+}
+
+func (a *ActionResponse) GetMessage() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Message
+}
+
+func (a *ActionResponse) GetData() *ActionData {
+	if a == nil {
+		return nil
+	}
+	return a.Data
+}
+
+func (a *ActionResponse) GetHint() *string {
+	if a == nil {
+		return nil
+	}
+	return a.Hint
+}
+
+func (a *ActionResponse) GetActionPerformed() *string {
+	if a == nil {
+		return nil
+	}
+	return a.ActionPerformed
+}
+
+func (a *ActionResponse) GetExtraProperties() map[string]interface{} {
+	return a.extraProperties
+}
+
+func (a *ActionResponse) require(field *big.Int) {
+	if a.explicitFields == nil {
+		a.explicitFields = big.NewInt(0)
+	}
+	a.explicitFields.Or(a.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (a *ActionResponse) SetSuccess(success *bool) {
+	a.Success = success
+	a.require(actionResponseFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (a *ActionResponse) SetMessage(message *string) {
+	a.Message = message
+	a.require(actionResponseFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (a *ActionResponse) SetData(data *ActionData) {
+	a.Data = data
+	a.require(actionResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (a *ActionResponse) SetHint(hint *string) {
+	a.Hint = hint
+	a.require(actionResponseFieldHint)
+}
+
+// SetStatus sets the Status field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (a *ActionResponse) SetStatus(status *string) {
+	a.Status = status
+	a.require(actionResponseFieldStatus)
+}
+
+// SetActionPerformed sets the ActionPerformed field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (a *ActionResponse) SetActionPerformed(actionPerformed *string) {
+	a.ActionPerformed = actionPerformed
+	a.require(actionResponseFieldActionPerformed)
+}
+
+func (a *ActionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler ActionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*a = ActionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *a)
+	if err != nil {
+		return err
+	}
+	a.extraProperties = extraProperties
+	a.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (a *ActionResponse) MarshalJSON() ([]byte, error) {
+	type embed ActionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*a),
 	}
 	explicitMarshaler := internal.HandleExplicitFields(marshaler, a.explicitFields)
 	return json.Marshal(explicitMarshaler)
@@ -131,10 +291,12 @@ func (a *ActionResponse) String() string {
 
 // Browser Info result
 var (
-	browserInfoResultFieldUserAgent = big.NewInt(1 << 0)
-	browserInfoResultFieldCdpUrl    = big.NewInt(1 << 1)
-	browserInfoResultFieldVncUrl    = big.NewInt(1 << 2)
-	browserInfoResultFieldViewport  = big.NewInt(1 << 3)
+	browserInfoResultFieldUserAgent    = big.NewInt(1 << 0)
+	browserInfoResultFieldCdpUrl       = big.NewInt(1 << 1)
+	browserInfoResultFieldVncUrl       = big.NewInt(1 << 2)
+	browserInfoResultFieldCdpUiUrl     = big.NewInt(1 << 3)
+	browserInfoResultFieldViewport     = big.NewInt(1 << 4)
+	browserInfoResultFieldPageViewport = big.NewInt(1 << 5)
 )
 
 type BrowserInfoResult struct {
@@ -144,8 +306,12 @@ type BrowserInfoResult struct {
 	CdpUrl string `json:"cdp_url" url:"cdp_url"`
 	// VNC URL
 	VncUrl string `json:"vnc_url" url:"vnc_url"`
-	// Viewport size
+	// CDP UI URL (browser-ui)
+	CdpUiUrl *string `json:"cdp_ui_url,omitempty" url:"cdp_ui_url,omitempty"`
+	// Display size (from xrandr / env vars)
 	Viewport *BrowserViewport `json:"viewport" url:"viewport"`
+	// Actual Chrome page viewport (window.innerWidth/Height via CDP). Smaller than viewport because Chrome UI chrome takes space.
+	PageViewport *BrowserViewport `json:"page_viewport,omitempty" url:"page_viewport,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -175,11 +341,25 @@ func (b *BrowserInfoResult) GetVncUrl() string {
 	return b.VncUrl
 }
 
+func (b *BrowserInfoResult) GetCdpUiUrl() *string {
+	if b == nil {
+		return nil
+	}
+	return b.CdpUiUrl
+}
+
 func (b *BrowserInfoResult) GetViewport() *BrowserViewport {
 	if b == nil {
 		return nil
 	}
 	return b.Viewport
+}
+
+func (b *BrowserInfoResult) GetPageViewport() *BrowserViewport {
+	if b == nil {
+		return nil
+	}
+	return b.PageViewport
 }
 
 func (b *BrowserInfoResult) GetExtraProperties() map[string]interface{} {
@@ -214,11 +394,25 @@ func (b *BrowserInfoResult) SetVncUrl(vncUrl string) {
 	b.require(browserInfoResultFieldVncUrl)
 }
 
+// SetCdpUiUrl sets the CdpUiUrl field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (b *BrowserInfoResult) SetCdpUiUrl(cdpUiUrl *string) {
+	b.CdpUiUrl = cdpUiUrl
+	b.require(browserInfoResultFieldCdpUiUrl)
+}
+
 // SetViewport sets the Viewport field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
 func (b *BrowserInfoResult) SetViewport(viewport *BrowserViewport) {
 	b.Viewport = viewport
 	b.require(browserInfoResultFieldViewport)
+}
+
+// SetPageViewport sets the PageViewport field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (b *BrowserInfoResult) SetPageViewport(pageViewport *BrowserViewport) {
+	b.PageViewport = pageViewport
+	b.require(browserInfoResultFieldPageViewport)
 }
 
 func (b *BrowserInfoResult) UnmarshalJSON(data []byte) error {
@@ -1027,6 +1221,28 @@ func (k *KeyUpAction) String() string {
 	return fmt.Sprintf("%#v", k)
 }
 
+type Mode string
+
+const (
+	ModeSoft Mode = "soft"
+	ModeHard Mode = "hard"
+)
+
+func NewModeFromString(s string) (Mode, error) {
+	switch s {
+	case "soft":
+		return ModeSoft, nil
+	case "hard":
+		return ModeHard, nil
+	}
+	var t Mode
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (m Mode) Ptr() *Mode {
+	return &m
+}
+
 var (
 	mouseDownActionFieldButton = big.NewInt(1 << 0)
 )
@@ -1553,6 +1769,7 @@ var (
 	responseBrowserInfoResultFieldSuccess = big.NewInt(1 << 0)
 	responseBrowserInfoResultFieldMessage = big.NewInt(1 << 1)
 	responseBrowserInfoResultFieldData    = big.NewInt(1 << 2)
+	responseBrowserInfoResultFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseBrowserInfoResult struct {
@@ -1562,6 +1779,8 @@ type ResponseBrowserInfoResult struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *BrowserInfoResult `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -1589,6 +1808,13 @@ func (r *ResponseBrowserInfoResult) GetData() *BrowserInfoResult {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseBrowserInfoResult) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseBrowserInfoResult) GetExtraProperties() map[string]interface{} {
@@ -1623,6 +1849,13 @@ func (r *ResponseBrowserInfoResult) SetData(data *BrowserInfoResult) {
 	r.require(responseBrowserInfoResultFieldData)
 }
 
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseBrowserInfoResult) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseBrowserInfoResultFieldHint)
+}
+
 func (r *ResponseBrowserInfoResult) UnmarshalJSON(data []byte) error {
 	type unmarshaler ResponseBrowserInfoResult
 	var value unmarshaler
@@ -1651,6 +1884,132 @@ func (r *ResponseBrowserInfoResult) MarshalJSON() ([]byte, error) {
 }
 
 func (r *ResponseBrowserInfoResult) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	restartRequestFieldMode         = big.NewInt(1 << 0)
+	restartRequestFieldUrlBlocklist = big.NewInt(1 << 1)
+	restartRequestFieldUrlAllowlist = big.NewInt(1 << 2)
+	restartRequestFieldLocale       = big.NewInt(1 << 3)
+)
+
+type RestartRequest struct {
+	Mode         *Mode    `json:"mode,omitempty" url:"mode,omitempty"`
+	UrlBlocklist []string `json:"url_blocklist,omitempty" url:"url_blocklist,omitempty"`
+	UrlAllowlist []string `json:"url_allowlist,omitempty" url:"url_allowlist,omitempty"`
+	Locale       *string  `json:"locale,omitempty" url:"locale,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *RestartRequest) GetMode() *Mode {
+	if r == nil {
+		return nil
+	}
+	return r.Mode
+}
+
+func (r *RestartRequest) GetUrlBlocklist() []string {
+	if r == nil {
+		return nil
+	}
+	return r.UrlBlocklist
+}
+
+func (r *RestartRequest) GetUrlAllowlist() []string {
+	if r == nil {
+		return nil
+	}
+	return r.UrlAllowlist
+}
+
+func (r *RestartRequest) GetLocale() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Locale
+}
+
+func (r *RestartRequest) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *RestartRequest) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetMode sets the Mode field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RestartRequest) SetMode(mode *Mode) {
+	r.Mode = mode
+	r.require(restartRequestFieldMode)
+}
+
+// SetUrlBlocklist sets the UrlBlocklist field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RestartRequest) SetUrlBlocklist(urlBlocklist []string) {
+	r.UrlBlocklist = urlBlocklist
+	r.require(restartRequestFieldUrlBlocklist)
+}
+
+// SetUrlAllowlist sets the UrlAllowlist field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RestartRequest) SetUrlAllowlist(urlAllowlist []string) {
+	r.UrlAllowlist = urlAllowlist
+	r.require(restartRequestFieldUrlAllowlist)
+}
+
+// SetLocale sets the Locale field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RestartRequest) SetLocale(locale *string) {
+	r.Locale = locale
+	r.require(restartRequestFieldLocale)
+}
+
+func (r *RestartRequest) UnmarshalJSON(data []byte) error {
+	type unmarshaler RestartRequest
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = RestartRequest(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *RestartRequest) MarshalJSON() ([]byte, error) {
+	type embed RestartRequest
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *RestartRequest) String() string {
 	if len(r.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
 			return value

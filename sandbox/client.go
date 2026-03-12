@@ -47,7 +47,7 @@ func (c *Client) GetContext(
 	return response.Body, nil
 }
 
-// Get installed packages by language
+// Get installed Python packages
 func (c *Client) GetPythonPackages(
 	ctx context.Context,
 	opts ...option.RequestOption,
@@ -62,7 +62,7 @@ func (c *Client) GetPythonPackages(
 	return response.Body, nil
 }
 
-// Get installed packages by language
+// Get installed Node.js packages
 func (c *Client) GetNodejsPackages(
 	ctx context.Context,
 	opts ...option.RequestOption,

@@ -10,10 +10,60 @@ import (
 )
 
 var (
-	nodeJsExecuteRequestFieldCode    = big.NewInt(1 << 0)
-	nodeJsExecuteRequestFieldTimeout = big.NewInt(1 << 1)
-	nodeJsExecuteRequestFieldStdin   = big.NewInt(1 << 2)
-	nodeJsExecuteRequestFieldFiles   = big.NewInt(1 << 3)
+	nodeJsCreateSessionRequestFieldSessionId   = big.NewInt(1 << 0)
+	nodeJsCreateSessionRequestFieldCwd         = big.NewInt(1 << 1)
+	nodeJsCreateSessionRequestFieldMaxIdleTime = big.NewInt(1 << 2)
+)
+
+type NodeJsCreateSessionRequest struct {
+	// Custom session ID (auto-generated if not provided)
+	SessionId *string `json:"session_id,omitempty" url:"-"`
+	// Working directory for the session
+	Cwd *string `json:"cwd,omitempty" url:"-"`
+	// Maximum idle time in seconds (default 24 hours)
+	MaxIdleTime *int `json:"max_idle_time,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (n *NodeJsCreateSessionRequest) require(field *big.Int) {
+	if n.explicitFields == nil {
+		n.explicitFields = big.NewInt(0)
+	}
+	n.explicitFields.Or(n.explicitFields, field)
+}
+
+// SetSessionId sets the SessionId field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsCreateSessionRequest) SetSessionId(sessionId *string) {
+	n.SessionId = sessionId
+	n.require(nodeJsCreateSessionRequestFieldSessionId)
+}
+
+// SetCwd sets the Cwd field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsCreateSessionRequest) SetCwd(cwd *string) {
+	n.Cwd = cwd
+	n.require(nodeJsCreateSessionRequestFieldCwd)
+}
+
+// SetMaxIdleTime sets the MaxIdleTime field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsCreateSessionRequest) SetMaxIdleTime(maxIdleTime *int) {
+	n.MaxIdleTime = maxIdleTime
+	n.require(nodeJsCreateSessionRequestFieldMaxIdleTime)
+}
+
+var (
+	nodeJsExecuteRequestFieldCode      = big.NewInt(1 << 0)
+	nodeJsExecuteRequestFieldTimeout   = big.NewInt(1 << 1)
+	nodeJsExecuteRequestFieldStdin     = big.NewInt(1 << 2)
+	nodeJsExecuteRequestFieldFiles     = big.NewInt(1 << 3)
+	nodeJsExecuteRequestFieldStateful  = big.NewInt(1 << 4)
+	nodeJsExecuteRequestFieldSessionId = big.NewInt(1 << 5)
+	nodeJsExecuteRequestFieldCwd       = big.NewInt(1 << 6)
+	nodeJsExecuteRequestFieldVersion   = big.NewInt(1 << 7)
 )
 
 type NodeJsExecuteRequest struct {
@@ -25,6 +75,14 @@ type NodeJsExecuteRequest struct {
 	Stdin *string `json:"stdin,omitempty" url:"-"`
 	// Additional files to create in execution directory
 	Files map[string]*string `json:"files,omitempty" url:"-"`
+	// Enable stateful execution with persistent REPL session
+	Stateful *bool `json:"stateful,omitempty" url:"-"`
+	// Session ID for stateful execution (reuse existing session)
+	SessionId *string `json:"session_id,omitempty" url:"-"`
+	// Working directory for code execution
+	Cwd *string `json:"cwd,omitempty" url:"-"`
+	// Node.js version to use: "node20", "node22", "node24", or aliases "20", "22", "24"
+	Version *string `json:"version,omitempty" url:"-"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -65,6 +123,243 @@ func (n *NodeJsExecuteRequest) SetFiles(files map[string]*string) {
 	n.require(nodeJsExecuteRequestFieldFiles)
 }
 
+// SetStateful sets the Stateful field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsExecuteRequest) SetStateful(stateful *bool) {
+	n.Stateful = stateful
+	n.require(nodeJsExecuteRequestFieldStateful)
+}
+
+// SetSessionId sets the SessionId field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsExecuteRequest) SetSessionId(sessionId *string) {
+	n.SessionId = sessionId
+	n.require(nodeJsExecuteRequestFieldSessionId)
+}
+
+// SetCwd sets the Cwd field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsExecuteRequest) SetCwd(cwd *string) {
+	n.Cwd = cwd
+	n.require(nodeJsExecuteRequestFieldCwd)
+}
+
+// SetVersion sets the Version field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsExecuteRequest) SetVersion(version *string) {
+	n.Version = version
+	n.require(nodeJsExecuteRequestFieldVersion)
+}
+
+var (
+	nodeJsCreateSessionResponseFieldSessionId = big.NewInt(1 << 0)
+	nodeJsCreateSessionResponseFieldCreated   = big.NewInt(1 << 1)
+	nodeJsCreateSessionResponseFieldMessage   = big.NewInt(1 << 2)
+	nodeJsCreateSessionResponseFieldSession   = big.NewInt(1 << 3)
+)
+
+type NodeJsCreateSessionResponse struct {
+	// Session ID
+	SessionId string `json:"session_id" url:"session_id"`
+	// Whether the session was newly created
+	Created bool `json:"created" url:"created"`
+	// Additional message (e.g., if session already exists)
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Session information (if created)
+	Session *NodeJsSessionInfo `json:"session,omitempty" url:"session,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (n *NodeJsCreateSessionResponse) GetSessionId() string {
+	if n == nil {
+		return ""
+	}
+	return n.SessionId
+}
+
+func (n *NodeJsCreateSessionResponse) GetCreated() bool {
+	if n == nil {
+		return false
+	}
+	return n.Created
+}
+
+func (n *NodeJsCreateSessionResponse) GetMessage() *string {
+	if n == nil {
+		return nil
+	}
+	return n.Message
+}
+
+func (n *NodeJsCreateSessionResponse) GetSession() *NodeJsSessionInfo {
+	if n == nil {
+		return nil
+	}
+	return n.Session
+}
+
+func (n *NodeJsCreateSessionResponse) GetExtraProperties() map[string]interface{} {
+	return n.extraProperties
+}
+
+func (n *NodeJsCreateSessionResponse) require(field *big.Int) {
+	if n.explicitFields == nil {
+		n.explicitFields = big.NewInt(0)
+	}
+	n.explicitFields.Or(n.explicitFields, field)
+}
+
+// SetSessionId sets the SessionId field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsCreateSessionResponse) SetSessionId(sessionId string) {
+	n.SessionId = sessionId
+	n.require(nodeJsCreateSessionResponseFieldSessionId)
+}
+
+// SetCreated sets the Created field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsCreateSessionResponse) SetCreated(created bool) {
+	n.Created = created
+	n.require(nodeJsCreateSessionResponseFieldCreated)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsCreateSessionResponse) SetMessage(message *string) {
+	n.Message = message
+	n.require(nodeJsCreateSessionResponseFieldMessage)
+}
+
+// SetSession sets the Session field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsCreateSessionResponse) SetSession(session *NodeJsSessionInfo) {
+	n.Session = session
+	n.require(nodeJsCreateSessionResponseFieldSession)
+}
+
+func (n *NodeJsCreateSessionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler NodeJsCreateSessionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*n = NodeJsCreateSessionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *n)
+	if err != nil {
+		return err
+	}
+	n.extraProperties = extraProperties
+	n.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (n *NodeJsCreateSessionResponse) MarshalJSON() ([]byte, error) {
+	type embed NodeJsCreateSessionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*n),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, n.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (n *NodeJsCreateSessionResponse) String() string {
+	if len(n.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(n.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(n); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", n)
+}
+
+var (
+	nodeJsDeleteSessionResponseFieldDeleted = big.NewInt(1 << 0)
+)
+
+type NodeJsDeleteSessionResponse struct {
+	// Whether the session was deleted
+	Deleted bool `json:"deleted" url:"deleted"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (n *NodeJsDeleteSessionResponse) GetDeleted() bool {
+	if n == nil {
+		return false
+	}
+	return n.Deleted
+}
+
+func (n *NodeJsDeleteSessionResponse) GetExtraProperties() map[string]interface{} {
+	return n.extraProperties
+}
+
+func (n *NodeJsDeleteSessionResponse) require(field *big.Int) {
+	if n.explicitFields == nil {
+		n.explicitFields = big.NewInt(0)
+	}
+	n.explicitFields.Or(n.explicitFields, field)
+}
+
+// SetDeleted sets the Deleted field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsDeleteSessionResponse) SetDeleted(deleted bool) {
+	n.Deleted = deleted
+	n.require(nodeJsDeleteSessionResponseFieldDeleted)
+}
+
+func (n *NodeJsDeleteSessionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler NodeJsDeleteSessionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*n = NodeJsDeleteSessionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *n)
+	if err != nil {
+		return err
+	}
+	n.extraProperties = extraProperties
+	n.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (n *NodeJsDeleteSessionResponse) MarshalJSON() ([]byte, error) {
+	type embed NodeJsDeleteSessionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*n),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, n.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (n *NodeJsDeleteSessionResponse) String() string {
+	if len(n.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(n.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(n); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", n)
+}
+
 var (
 	nodeJsExecuteResponseFieldStatus         = big.NewInt(1 << 0)
 	nodeJsExecuteResponseFieldExecutionCount = big.NewInt(1 << 1)
@@ -73,6 +368,7 @@ var (
 	nodeJsExecuteResponseFieldStdout         = big.NewInt(1 << 4)
 	nodeJsExecuteResponseFieldStderr         = big.NewInt(1 << 5)
 	nodeJsExecuteResponseFieldExitCode       = big.NewInt(1 << 6)
+	nodeJsExecuteResponseFieldSessionId      = big.NewInt(1 << 7)
 )
 
 type NodeJsExecuteResponse struct {
@@ -91,6 +387,8 @@ type NodeJsExecuteResponse struct {
 	Stderr *string `json:"stderr,omitempty" url:"stderr,omitempty"`
 	// Process exit code
 	ExitCode int `json:"exit_code" url:"exit_code"`
+	// Session ID for stateful execution (use this to continue the session)
+	SessionId *string `json:"session_id,omitempty" url:"session_id,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -147,6 +445,13 @@ func (n *NodeJsExecuteResponse) GetExitCode() int {
 		return 0
 	}
 	return n.ExitCode
+}
+
+func (n *NodeJsExecuteResponse) GetSessionId() *string {
+	if n == nil {
+		return nil
+	}
+	return n.SessionId
 }
 
 func (n *NodeJsExecuteResponse) Language() string {
@@ -211,6 +516,13 @@ func (n *NodeJsExecuteResponse) SetStderr(stderr *string) {
 func (n *NodeJsExecuteResponse) SetExitCode(exitCode int) {
 	n.ExitCode = exitCode
 	n.require(nodeJsExecuteResponseFieldExitCode)
+}
+
+// SetSessionId sets the SessionId field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsExecuteResponse) SetSessionId(sessionId *string) {
+	n.SessionId = sessionId
+	n.require(nodeJsExecuteResponseFieldSessionId)
 }
 
 func (n *NodeJsExecuteResponse) UnmarshalJSON(data []byte) error {
@@ -461,6 +773,103 @@ func (n *NodeJsOutput) String() string {
 	return fmt.Sprintf("%#v", n)
 }
 
+// Package information
+var (
+	nodeJsPackageInfoFieldName    = big.NewInt(1 << 0)
+	nodeJsPackageInfoFieldVersion = big.NewInt(1 << 1)
+)
+
+type NodeJsPackageInfo struct {
+	// Package name
+	Name string `json:"name" url:"name"`
+	// Package version
+	Version string `json:"version" url:"version"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (n *NodeJsPackageInfo) GetName() string {
+	if n == nil {
+		return ""
+	}
+	return n.Name
+}
+
+func (n *NodeJsPackageInfo) GetVersion() string {
+	if n == nil {
+		return ""
+	}
+	return n.Version
+}
+
+func (n *NodeJsPackageInfo) GetExtraProperties() map[string]interface{} {
+	return n.extraProperties
+}
+
+func (n *NodeJsPackageInfo) require(field *big.Int) {
+	if n.explicitFields == nil {
+		n.explicitFields = big.NewInt(0)
+	}
+	n.explicitFields.Or(n.explicitFields, field)
+}
+
+// SetName sets the Name field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsPackageInfo) SetName(name string) {
+	n.Name = name
+	n.require(nodeJsPackageInfoFieldName)
+}
+
+// SetVersion sets the Version field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsPackageInfo) SetVersion(version string) {
+	n.Version = version
+	n.require(nodeJsPackageInfoFieldVersion)
+}
+
+func (n *NodeJsPackageInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler NodeJsPackageInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*n = NodeJsPackageInfo(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *n)
+	if err != nil {
+		return err
+	}
+	n.extraProperties = extraProperties
+	n.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (n *NodeJsPackageInfo) MarshalJSON() ([]byte, error) {
+	type embed NodeJsPackageInfo
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*n),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, n.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (n *NodeJsPackageInfo) String() string {
+	if len(n.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(n.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(n); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", n)
+}
+
 // NodeJS runtime information model
 var (
 	nodeJsRuntimeInfoFieldNodeVersion        = big.NewInt(1 << 0)
@@ -468,7 +877,12 @@ var (
 	nodeJsRuntimeInfoFieldSupportedLanguages = big.NewInt(1 << 2)
 	nodeJsRuntimeInfoFieldDescription        = big.NewInt(1 << 3)
 	nodeJsRuntimeInfoFieldRuntimeDirectory   = big.NewInt(1 << 4)
-	nodeJsRuntimeInfoFieldError              = big.NewInt(1 << 5)
+	nodeJsRuntimeInfoFieldGlobalNpmDirectory = big.NewInt(1 << 5)
+	nodeJsRuntimeInfoFieldRuntimePackages    = big.NewInt(1 << 6)
+	nodeJsRuntimeInfoFieldGlobalPackages     = big.NewInt(1 << 7)
+	nodeJsRuntimeInfoFieldError              = big.NewInt(1 << 8)
+	nodeJsRuntimeInfoFieldAvailableVersions  = big.NewInt(1 << 9)
+	nodeJsRuntimeInfoFieldCurrentVersion     = big.NewInt(1 << 10)
 )
 
 type NodeJsRuntimeInfo struct {
@@ -482,8 +896,18 @@ type NodeJsRuntimeInfo struct {
 	Description string `json:"description" url:"description"`
 	// Runtime directory path
 	RuntimeDirectory *string `json:"runtime_directory,omitempty" url:"runtime_directory,omitempty"`
+	// Global npm directory path
+	GlobalNpmDirectory *string `json:"global_npm_directory,omitempty" url:"global_npm_directory,omitempty"`
+	// Pre-installed runtime packages
+	RuntimePackages []*NodeJsPackageInfo `json:"runtime_packages,omitempty" url:"runtime_packages,omitempty"`
+	// Globally installed npm packages
+	GlobalPackages []*NodeJsPackageInfo `json:"global_packages,omitempty" url:"global_packages,omitempty"`
 	// Error message if runtime info retrieval failed
 	Error *string `json:"error,omitempty" url:"error,omitempty"`
+	// Available Node.js versions (e.g., node20, node22, node24)
+	AvailableVersions []string `json:"available_versions,omitempty" url:"available_versions,omitempty"`
+	// Currently active Node.js version
+	CurrentVersion *string `json:"current_version,omitempty" url:"current_version,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -527,11 +951,46 @@ func (n *NodeJsRuntimeInfo) GetRuntimeDirectory() *string {
 	return n.RuntimeDirectory
 }
 
+func (n *NodeJsRuntimeInfo) GetGlobalNpmDirectory() *string {
+	if n == nil {
+		return nil
+	}
+	return n.GlobalNpmDirectory
+}
+
+func (n *NodeJsRuntimeInfo) GetRuntimePackages() []*NodeJsPackageInfo {
+	if n == nil {
+		return nil
+	}
+	return n.RuntimePackages
+}
+
+func (n *NodeJsRuntimeInfo) GetGlobalPackages() []*NodeJsPackageInfo {
+	if n == nil {
+		return nil
+	}
+	return n.GlobalPackages
+}
+
 func (n *NodeJsRuntimeInfo) GetError() *string {
 	if n == nil {
 		return nil
 	}
 	return n.Error
+}
+
+func (n *NodeJsRuntimeInfo) GetAvailableVersions() []string {
+	if n == nil {
+		return nil
+	}
+	return n.AvailableVersions
+}
+
+func (n *NodeJsRuntimeInfo) GetCurrentVersion() *string {
+	if n == nil {
+		return nil
+	}
+	return n.CurrentVersion
 }
 
 func (n *NodeJsRuntimeInfo) GetExtraProperties() map[string]interface{} {
@@ -580,11 +1039,46 @@ func (n *NodeJsRuntimeInfo) SetRuntimeDirectory(runtimeDirectory *string) {
 	n.require(nodeJsRuntimeInfoFieldRuntimeDirectory)
 }
 
+// SetGlobalNpmDirectory sets the GlobalNpmDirectory field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsRuntimeInfo) SetGlobalNpmDirectory(globalNpmDirectory *string) {
+	n.GlobalNpmDirectory = globalNpmDirectory
+	n.require(nodeJsRuntimeInfoFieldGlobalNpmDirectory)
+}
+
+// SetRuntimePackages sets the RuntimePackages field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsRuntimeInfo) SetRuntimePackages(runtimePackages []*NodeJsPackageInfo) {
+	n.RuntimePackages = runtimePackages
+	n.require(nodeJsRuntimeInfoFieldRuntimePackages)
+}
+
+// SetGlobalPackages sets the GlobalPackages field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsRuntimeInfo) SetGlobalPackages(globalPackages []*NodeJsPackageInfo) {
+	n.GlobalPackages = globalPackages
+	n.require(nodeJsRuntimeInfoFieldGlobalPackages)
+}
+
 // SetError sets the Error field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
 func (n *NodeJsRuntimeInfo) SetError(error_ *string) {
 	n.Error = error_
 	n.require(nodeJsRuntimeInfoFieldError)
+}
+
+// SetAvailableVersions sets the AvailableVersions field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsRuntimeInfo) SetAvailableVersions(availableVersions []string) {
+	n.AvailableVersions = availableVersions
+	n.require(nodeJsRuntimeInfoFieldAvailableVersions)
+}
+
+// SetCurrentVersion sets the CurrentVersion field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsRuntimeInfo) SetCurrentVersion(currentVersion *string) {
+	n.CurrentVersion = currentVersion
+	n.require(nodeJsRuntimeInfoFieldCurrentVersion)
 }
 
 func (n *NodeJsRuntimeInfo) UnmarshalJSON(data []byte) error {
@@ -627,9 +1121,705 @@ func (n *NodeJsRuntimeInfo) String() string {
 }
 
 var (
+	nodeJsSessionInfoFieldSessionId   = big.NewInt(1 << 0)
+	nodeJsSessionInfoFieldCwd         = big.NewInt(1 << 1)
+	nodeJsSessionInfoFieldCreatedAt   = big.NewInt(1 << 2)
+	nodeJsSessionInfoFieldLastUsed    = big.NewInt(1 << 3)
+	nodeJsSessionInfoFieldMaxIdleTime = big.NewInt(1 << 4)
+	nodeJsSessionInfoFieldAgeSeconds  = big.NewInt(1 << 5)
+	nodeJsSessionInfoFieldState       = big.NewInt(1 << 6)
+)
+
+type NodeJsSessionInfo struct {
+	// Session ID
+	SessionId string `json:"session_id" url:"session_id"`
+	// Working directory
+	Cwd string `json:"cwd" url:"cwd"`
+	// Session creation timestamp (ms since epoch)
+	CreatedAt float64 `json:"created_at" url:"created_at"`
+	// Last activity timestamp (ms since epoch)
+	LastUsed float64 `json:"last_used" url:"last_used"`
+	// Maximum idle time in milliseconds
+	MaxIdleTime int `json:"max_idle_time" url:"max_idle_time"`
+	// Seconds since last activity
+	AgeSeconds int `json:"age_seconds" url:"age_seconds"`
+	// Session state: IDLE or EXECUTING
+	State string `json:"state" url:"state"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (n *NodeJsSessionInfo) GetSessionId() string {
+	if n == nil {
+		return ""
+	}
+	return n.SessionId
+}
+
+func (n *NodeJsSessionInfo) GetCwd() string {
+	if n == nil {
+		return ""
+	}
+	return n.Cwd
+}
+
+func (n *NodeJsSessionInfo) GetCreatedAt() float64 {
+	if n == nil {
+		return 0
+	}
+	return n.CreatedAt
+}
+
+func (n *NodeJsSessionInfo) GetLastUsed() float64 {
+	if n == nil {
+		return 0
+	}
+	return n.LastUsed
+}
+
+func (n *NodeJsSessionInfo) GetMaxIdleTime() int {
+	if n == nil {
+		return 0
+	}
+	return n.MaxIdleTime
+}
+
+func (n *NodeJsSessionInfo) GetAgeSeconds() int {
+	if n == nil {
+		return 0
+	}
+	return n.AgeSeconds
+}
+
+func (n *NodeJsSessionInfo) GetState() string {
+	if n == nil {
+		return ""
+	}
+	return n.State
+}
+
+func (n *NodeJsSessionInfo) GetExtraProperties() map[string]interface{} {
+	return n.extraProperties
+}
+
+func (n *NodeJsSessionInfo) require(field *big.Int) {
+	if n.explicitFields == nil {
+		n.explicitFields = big.NewInt(0)
+	}
+	n.explicitFields.Or(n.explicitFields, field)
+}
+
+// SetSessionId sets the SessionId field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsSessionInfo) SetSessionId(sessionId string) {
+	n.SessionId = sessionId
+	n.require(nodeJsSessionInfoFieldSessionId)
+}
+
+// SetCwd sets the Cwd field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsSessionInfo) SetCwd(cwd string) {
+	n.Cwd = cwd
+	n.require(nodeJsSessionInfoFieldCwd)
+}
+
+// SetCreatedAt sets the CreatedAt field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsSessionInfo) SetCreatedAt(createdAt float64) {
+	n.CreatedAt = createdAt
+	n.require(nodeJsSessionInfoFieldCreatedAt)
+}
+
+// SetLastUsed sets the LastUsed field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsSessionInfo) SetLastUsed(lastUsed float64) {
+	n.LastUsed = lastUsed
+	n.require(nodeJsSessionInfoFieldLastUsed)
+}
+
+// SetMaxIdleTime sets the MaxIdleTime field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsSessionInfo) SetMaxIdleTime(maxIdleTime int) {
+	n.MaxIdleTime = maxIdleTime
+	n.require(nodeJsSessionInfoFieldMaxIdleTime)
+}
+
+// SetAgeSeconds sets the AgeSeconds field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsSessionInfo) SetAgeSeconds(ageSeconds int) {
+	n.AgeSeconds = ageSeconds
+	n.require(nodeJsSessionInfoFieldAgeSeconds)
+}
+
+// SetState sets the State field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsSessionInfo) SetState(state string) {
+	n.State = state
+	n.require(nodeJsSessionInfoFieldState)
+}
+
+func (n *NodeJsSessionInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler NodeJsSessionInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*n = NodeJsSessionInfo(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *n)
+	if err != nil {
+		return err
+	}
+	n.extraProperties = extraProperties
+	n.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (n *NodeJsSessionInfo) MarshalJSON() ([]byte, error) {
+	type embed NodeJsSessionInfo
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*n),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, n.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (n *NodeJsSessionInfo) String() string {
+	if len(n.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(n.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(n); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", n)
+}
+
+var (
+	nodeJsSessionListResponseFieldSessions = big.NewInt(1 << 0)
+)
+
+type NodeJsSessionListResponse struct {
+	// Map of session ID to session info
+	Sessions map[string]*NodeJsSessionInfo `json:"sessions,omitempty" url:"sessions,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (n *NodeJsSessionListResponse) GetSessions() map[string]*NodeJsSessionInfo {
+	if n == nil {
+		return nil
+	}
+	return n.Sessions
+}
+
+func (n *NodeJsSessionListResponse) GetExtraProperties() map[string]interface{} {
+	return n.extraProperties
+}
+
+func (n *NodeJsSessionListResponse) require(field *big.Int) {
+	if n.explicitFields == nil {
+		n.explicitFields = big.NewInt(0)
+	}
+	n.explicitFields.Or(n.explicitFields, field)
+}
+
+// SetSessions sets the Sessions field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsSessionListResponse) SetSessions(sessions map[string]*NodeJsSessionInfo) {
+	n.Sessions = sessions
+	n.require(nodeJsSessionListResponseFieldSessions)
+}
+
+func (n *NodeJsSessionListResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler NodeJsSessionListResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*n = NodeJsSessionListResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *n)
+	if err != nil {
+		return err
+	}
+	n.extraProperties = extraProperties
+	n.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (n *NodeJsSessionListResponse) MarshalJSON() ([]byte, error) {
+	type embed NodeJsSessionListResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*n),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, n.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (n *NodeJsSessionListResponse) String() string {
+	if len(n.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(n.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(n); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", n)
+}
+
+var (
+	nodeJsSessionResponseFieldSession = big.NewInt(1 << 0)
+)
+
+type NodeJsSessionResponse struct {
+	// Session information
+	Session *NodeJsSessionInfo `json:"session" url:"session"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (n *NodeJsSessionResponse) GetSession() *NodeJsSessionInfo {
+	if n == nil {
+		return nil
+	}
+	return n.Session
+}
+
+func (n *NodeJsSessionResponse) GetExtraProperties() map[string]interface{} {
+	return n.extraProperties
+}
+
+func (n *NodeJsSessionResponse) require(field *big.Int) {
+	if n.explicitFields == nil {
+		n.explicitFields = big.NewInt(0)
+	}
+	n.explicitFields.Or(n.explicitFields, field)
+}
+
+// SetSession sets the Session field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsSessionResponse) SetSession(session *NodeJsSessionInfo) {
+	n.Session = session
+	n.require(nodeJsSessionResponseFieldSession)
+}
+
+func (n *NodeJsSessionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler NodeJsSessionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*n = NodeJsSessionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *n)
+	if err != nil {
+		return err
+	}
+	n.extraProperties = extraProperties
+	n.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (n *NodeJsSessionResponse) MarshalJSON() ([]byte, error) {
+	type embed NodeJsSessionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*n),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, n.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (n *NodeJsSessionResponse) String() string {
+	if len(n.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(n.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(n); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", n)
+}
+
+var (
+	nodeJsUpdateSessionResponseFieldUpdated = big.NewInt(1 << 0)
+	nodeJsUpdateSessionResponseFieldSession = big.NewInt(1 << 1)
+)
+
+type NodeJsUpdateSessionResponse struct {
+	// Whether the update was successful
+	Updated bool `json:"updated" url:"updated"`
+	// Updated session information
+	Session *NodeJsSessionInfo `json:"session" url:"session"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (n *NodeJsUpdateSessionResponse) GetUpdated() bool {
+	if n == nil {
+		return false
+	}
+	return n.Updated
+}
+
+func (n *NodeJsUpdateSessionResponse) GetSession() *NodeJsSessionInfo {
+	if n == nil {
+		return nil
+	}
+	return n.Session
+}
+
+func (n *NodeJsUpdateSessionResponse) GetExtraProperties() map[string]interface{} {
+	return n.extraProperties
+}
+
+func (n *NodeJsUpdateSessionResponse) require(field *big.Int) {
+	if n.explicitFields == nil {
+		n.explicitFields = big.NewInt(0)
+	}
+	n.explicitFields.Or(n.explicitFields, field)
+}
+
+// SetUpdated sets the Updated field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsUpdateSessionResponse) SetUpdated(updated bool) {
+	n.Updated = updated
+	n.require(nodeJsUpdateSessionResponseFieldUpdated)
+}
+
+// SetSession sets the Session field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsUpdateSessionResponse) SetSession(session *NodeJsSessionInfo) {
+	n.Session = session
+	n.require(nodeJsUpdateSessionResponseFieldSession)
+}
+
+func (n *NodeJsUpdateSessionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler NodeJsUpdateSessionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*n = NodeJsUpdateSessionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *n)
+	if err != nil {
+		return err
+	}
+	n.extraProperties = extraProperties
+	n.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (n *NodeJsUpdateSessionResponse) MarshalJSON() ([]byte, error) {
+	type embed NodeJsUpdateSessionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*n),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, n.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (n *NodeJsUpdateSessionResponse) String() string {
+	if len(n.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(n.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(n); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", n)
+}
+
+var (
+	responseNodeJsCreateSessionResponseFieldSuccess = big.NewInt(1 << 0)
+	responseNodeJsCreateSessionResponseFieldMessage = big.NewInt(1 << 1)
+	responseNodeJsCreateSessionResponseFieldData    = big.NewInt(1 << 2)
+	responseNodeJsCreateSessionResponseFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseNodeJsCreateSessionResponse struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *NodeJsCreateSessionResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseNodeJsCreateSessionResponse) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseNodeJsCreateSessionResponse) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseNodeJsCreateSessionResponse) GetData() *NodeJsCreateSessionResponse {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseNodeJsCreateSessionResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseNodeJsCreateSessionResponse) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseNodeJsCreateSessionResponse) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsCreateSessionResponse) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseNodeJsCreateSessionResponseFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsCreateSessionResponse) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseNodeJsCreateSessionResponseFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsCreateSessionResponse) SetData(data *NodeJsCreateSessionResponse) {
+	r.Data = data
+	r.require(responseNodeJsCreateSessionResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsCreateSessionResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseNodeJsCreateSessionResponseFieldHint)
+}
+
+func (r *ResponseNodeJsCreateSessionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseNodeJsCreateSessionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseNodeJsCreateSessionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseNodeJsCreateSessionResponse) MarshalJSON() ([]byte, error) {
+	type embed ResponseNodeJsCreateSessionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseNodeJsCreateSessionResponse) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseNodeJsDeleteSessionResponseFieldSuccess = big.NewInt(1 << 0)
+	responseNodeJsDeleteSessionResponseFieldMessage = big.NewInt(1 << 1)
+	responseNodeJsDeleteSessionResponseFieldData    = big.NewInt(1 << 2)
+	responseNodeJsDeleteSessionResponseFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseNodeJsDeleteSessionResponse struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *NodeJsDeleteSessionResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseNodeJsDeleteSessionResponse) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseNodeJsDeleteSessionResponse) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseNodeJsDeleteSessionResponse) GetData() *NodeJsDeleteSessionResponse {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseNodeJsDeleteSessionResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseNodeJsDeleteSessionResponse) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseNodeJsDeleteSessionResponse) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsDeleteSessionResponse) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseNodeJsDeleteSessionResponseFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsDeleteSessionResponse) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseNodeJsDeleteSessionResponseFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsDeleteSessionResponse) SetData(data *NodeJsDeleteSessionResponse) {
+	r.Data = data
+	r.require(responseNodeJsDeleteSessionResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsDeleteSessionResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseNodeJsDeleteSessionResponseFieldHint)
+}
+
+func (r *ResponseNodeJsDeleteSessionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseNodeJsDeleteSessionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseNodeJsDeleteSessionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseNodeJsDeleteSessionResponse) MarshalJSON() ([]byte, error) {
+	type embed ResponseNodeJsDeleteSessionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseNodeJsDeleteSessionResponse) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
 	responseNodeJsExecuteResponseFieldSuccess = big.NewInt(1 << 0)
 	responseNodeJsExecuteResponseFieldMessage = big.NewInt(1 << 1)
 	responseNodeJsExecuteResponseFieldData    = big.NewInt(1 << 2)
+	responseNodeJsExecuteResponseFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseNodeJsExecuteResponse struct {
@@ -639,6 +1829,8 @@ type ResponseNodeJsExecuteResponse struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *NodeJsExecuteResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -666,6 +1858,13 @@ func (r *ResponseNodeJsExecuteResponse) GetData() *NodeJsExecuteResponse {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseNodeJsExecuteResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseNodeJsExecuteResponse) GetExtraProperties() map[string]interface{} {
@@ -698,6 +1897,13 @@ func (r *ResponseNodeJsExecuteResponse) SetMessage(message *string) {
 func (r *ResponseNodeJsExecuteResponse) SetData(data *NodeJsExecuteResponse) {
 	r.Data = data
 	r.require(responseNodeJsExecuteResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsExecuteResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseNodeJsExecuteResponseFieldHint)
 }
 
 func (r *ResponseNodeJsExecuteResponse) UnmarshalJSON(data []byte) error {
@@ -743,6 +1949,7 @@ var (
 	responseNodeJsRuntimeInfoFieldSuccess = big.NewInt(1 << 0)
 	responseNodeJsRuntimeInfoFieldMessage = big.NewInt(1 << 1)
 	responseNodeJsRuntimeInfoFieldData    = big.NewInt(1 << 2)
+	responseNodeJsRuntimeInfoFieldHint    = big.NewInt(1 << 3)
 )
 
 type ResponseNodeJsRuntimeInfo struct {
@@ -752,6 +1959,8 @@ type ResponseNodeJsRuntimeInfo struct {
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
 	Data *NodeJsRuntimeInfo `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -779,6 +1988,13 @@ func (r *ResponseNodeJsRuntimeInfo) GetData() *NodeJsRuntimeInfo {
 		return nil
 	}
 	return r.Data
+}
+
+func (r *ResponseNodeJsRuntimeInfo) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
 }
 
 func (r *ResponseNodeJsRuntimeInfo) GetExtraProperties() map[string]interface{} {
@@ -811,6 +2027,13 @@ func (r *ResponseNodeJsRuntimeInfo) SetMessage(message *string) {
 func (r *ResponseNodeJsRuntimeInfo) SetData(data *NodeJsRuntimeInfo) {
 	r.Data = data
 	r.require(responseNodeJsRuntimeInfoFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsRuntimeInfo) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseNodeJsRuntimeInfoFieldHint)
 }
 
 func (r *ResponseNodeJsRuntimeInfo) UnmarshalJSON(data []byte) error {
@@ -850,4 +2073,430 @@ func (r *ResponseNodeJsRuntimeInfo) String() string {
 		return value
 	}
 	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseNodeJsSessionListResponseFieldSuccess = big.NewInt(1 << 0)
+	responseNodeJsSessionListResponseFieldMessage = big.NewInt(1 << 1)
+	responseNodeJsSessionListResponseFieldData    = big.NewInt(1 << 2)
+	responseNodeJsSessionListResponseFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseNodeJsSessionListResponse struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *NodeJsSessionListResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseNodeJsSessionListResponse) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseNodeJsSessionListResponse) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseNodeJsSessionListResponse) GetData() *NodeJsSessionListResponse {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseNodeJsSessionListResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseNodeJsSessionListResponse) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseNodeJsSessionListResponse) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsSessionListResponse) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseNodeJsSessionListResponseFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsSessionListResponse) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseNodeJsSessionListResponseFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsSessionListResponse) SetData(data *NodeJsSessionListResponse) {
+	r.Data = data
+	r.require(responseNodeJsSessionListResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsSessionListResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseNodeJsSessionListResponseFieldHint)
+}
+
+func (r *ResponseNodeJsSessionListResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseNodeJsSessionListResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseNodeJsSessionListResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseNodeJsSessionListResponse) MarshalJSON() ([]byte, error) {
+	type embed ResponseNodeJsSessionListResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseNodeJsSessionListResponse) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseNodeJsSessionResponseFieldSuccess = big.NewInt(1 << 0)
+	responseNodeJsSessionResponseFieldMessage = big.NewInt(1 << 1)
+	responseNodeJsSessionResponseFieldData    = big.NewInt(1 << 2)
+	responseNodeJsSessionResponseFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseNodeJsSessionResponse struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *NodeJsSessionResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseNodeJsSessionResponse) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseNodeJsSessionResponse) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseNodeJsSessionResponse) GetData() *NodeJsSessionResponse {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseNodeJsSessionResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseNodeJsSessionResponse) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseNodeJsSessionResponse) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsSessionResponse) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseNodeJsSessionResponseFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsSessionResponse) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseNodeJsSessionResponseFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsSessionResponse) SetData(data *NodeJsSessionResponse) {
+	r.Data = data
+	r.require(responseNodeJsSessionResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsSessionResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseNodeJsSessionResponseFieldHint)
+}
+
+func (r *ResponseNodeJsSessionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseNodeJsSessionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseNodeJsSessionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseNodeJsSessionResponse) MarshalJSON() ([]byte, error) {
+	type embed ResponseNodeJsSessionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseNodeJsSessionResponse) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseNodeJsUpdateSessionResponseFieldSuccess = big.NewInt(1 << 0)
+	responseNodeJsUpdateSessionResponseFieldMessage = big.NewInt(1 << 1)
+	responseNodeJsUpdateSessionResponseFieldData    = big.NewInt(1 << 2)
+	responseNodeJsUpdateSessionResponseFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseNodeJsUpdateSessionResponse struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *NodeJsUpdateSessionResponse `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseNodeJsUpdateSessionResponse) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseNodeJsUpdateSessionResponse) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseNodeJsUpdateSessionResponse) GetData() *NodeJsUpdateSessionResponse {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseNodeJsUpdateSessionResponse) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseNodeJsUpdateSessionResponse) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseNodeJsUpdateSessionResponse) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsUpdateSessionResponse) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseNodeJsUpdateSessionResponseFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsUpdateSessionResponse) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseNodeJsUpdateSessionResponseFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsUpdateSessionResponse) SetData(data *NodeJsUpdateSessionResponse) {
+	r.Data = data
+	r.require(responseNodeJsUpdateSessionResponseFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseNodeJsUpdateSessionResponse) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseNodeJsUpdateSessionResponseFieldHint)
+}
+
+func (r *ResponseNodeJsUpdateSessionResponse) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseNodeJsUpdateSessionResponse
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseNodeJsUpdateSessionResponse(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseNodeJsUpdateSessionResponse) MarshalJSON() ([]byte, error) {
+	type embed ResponseNodeJsUpdateSessionResponse
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseNodeJsUpdateSessionResponse) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	nodeJsUpdateSessionRequestFieldMaxIdleTime = big.NewInt(1 << 0)
+	nodeJsUpdateSessionRequestFieldCwd         = big.NewInt(1 << 1)
+)
+
+type NodeJsUpdateSessionRequest struct {
+	// New maximum idle time in seconds
+	MaxIdleTime *int `json:"max_idle_time,omitempty" url:"-"`
+	// New working directory
+	Cwd *string `json:"cwd,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (n *NodeJsUpdateSessionRequest) require(field *big.Int) {
+	if n.explicitFields == nil {
+		n.explicitFields = big.NewInt(0)
+	}
+	n.explicitFields.Or(n.explicitFields, field)
+}
+
+// SetMaxIdleTime sets the MaxIdleTime field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsUpdateSessionRequest) SetMaxIdleTime(maxIdleTime *int) {
+	n.MaxIdleTime = maxIdleTime
+	n.require(nodeJsUpdateSessionRequestFieldMaxIdleTime)
+}
+
+// SetCwd sets the Cwd field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (n *NodeJsUpdateSessionRequest) SetCwd(cwd *string) {
+	n.Cwd = cwd
+	n.require(nodeJsUpdateSessionRequestFieldCwd)
 }

@@ -313,12 +313,14 @@ func (s *SandboxDetail) String() string {
 }
 
 var (
-	sandboxResponseFieldSuccess = big.NewInt(1 << 0)
-	sandboxResponseFieldMessage = big.NewInt(1 << 1)
-	sandboxResponseFieldData    = big.NewInt(1 << 2)
-	sandboxResponseFieldHomeDir = big.NewInt(1 << 3)
-	sandboxResponseFieldVersion = big.NewInt(1 << 4)
-	sandboxResponseFieldDetail  = big.NewInt(1 << 5)
+	sandboxResponseFieldSuccess   = big.NewInt(1 << 0)
+	sandboxResponseFieldMessage   = big.NewInt(1 << 1)
+	sandboxResponseFieldData      = big.NewInt(1 << 2)
+	sandboxResponseFieldHint      = big.NewInt(1 << 3)
+	sandboxResponseFieldHomeDir   = big.NewInt(1 << 4)
+	sandboxResponseFieldWorkspace = big.NewInt(1 << 5)
+	sandboxResponseFieldVersion   = big.NewInt(1 << 6)
+	sandboxResponseFieldDetail    = big.NewInt(1 << 7)
 )
 
 type SandboxResponse struct {
@@ -327,10 +329,13 @@ type SandboxResponse struct {
 	// Operation result message
 	Message *string `json:"message,omitempty" url:"message,omitempty"`
 	// Data returned from the operation
-	Data    interface{}    `json:"data,omitempty" url:"data,omitempty"`
-	HomeDir string         `json:"home_dir" url:"home_dir"`
-	Version string         `json:"version" url:"version"`
-	Detail  *SandboxDetail `json:"detail" url:"detail"`
+	Data interface{} `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint      *string        `json:"hint,omitempty" url:"hint,omitempty"`
+	HomeDir   string         `json:"home_dir" url:"home_dir"`
+	Workspace *string        `json:"workspace,omitempty" url:"workspace,omitempty"`
+	Version   string         `json:"version" url:"version"`
+	Detail    *SandboxDetail `json:"detail" url:"detail"`
 
 	// Private bitmask of fields set to an explicit value and therefore not to be omitted
 	explicitFields *big.Int `json:"-" url:"-"`
@@ -360,11 +365,25 @@ func (s *SandboxResponse) GetData() interface{} {
 	return s.Data
 }
 
+func (s *SandboxResponse) GetHint() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Hint
+}
+
 func (s *SandboxResponse) GetHomeDir() string {
 	if s == nil {
 		return ""
 	}
 	return s.HomeDir
+}
+
+func (s *SandboxResponse) GetWorkspace() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Workspace
 }
 
 func (s *SandboxResponse) GetVersion() string {
@@ -413,11 +432,25 @@ func (s *SandboxResponse) SetData(data interface{}) {
 	s.require(sandboxResponseFieldData)
 }
 
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxResponse) SetHint(hint *string) {
+	s.Hint = hint
+	s.require(sandboxResponseFieldHint)
+}
+
 // SetHomeDir sets the HomeDir field and marks it as non-optional;
 // this prevents an empty or null value for this field from being omitted during serialization.
 func (s *SandboxResponse) SetHomeDir(homeDir string) {
 	s.HomeDir = homeDir
 	s.require(sandboxResponseFieldHomeDir)
+}
+
+// SetWorkspace sets the Workspace field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxResponse) SetWorkspace(workspace *string) {
+	s.Workspace = workspace
+	s.require(sandboxResponseFieldWorkspace)
 }
 
 // SetVersion sets the Version field and marks it as non-optional;
@@ -479,8 +512,9 @@ var (
 	systemEnvFieldArch          = big.NewInt(1 << 2)
 	systemEnvFieldUser          = big.NewInt(1 << 3)
 	systemEnvFieldHomeDir       = big.NewInt(1 << 4)
-	systemEnvFieldTimezone      = big.NewInt(1 << 5)
-	systemEnvFieldOccupiedPorts = big.NewInt(1 << 6)
+	systemEnvFieldWorkspace     = big.NewInt(1 << 5)
+	systemEnvFieldTimezone      = big.NewInt(1 << 6)
+	systemEnvFieldOccupiedPorts = big.NewInt(1 << 7)
 )
 
 type SystemEnv struct {
@@ -489,6 +523,7 @@ type SystemEnv struct {
 	Arch          string   `json:"arch" url:"arch"`
 	User          string   `json:"user" url:"user"`
 	HomeDir       string   `json:"home_dir" url:"home_dir"`
+	Workspace     *string  `json:"workspace,omitempty" url:"workspace,omitempty"`
 	Timezone      string   `json:"timezone" url:"timezone"`
 	OccupiedPorts []string `json:"occupied_ports" url:"occupied_ports"`
 
@@ -532,6 +567,13 @@ func (s *SystemEnv) GetHomeDir() string {
 		return ""
 	}
 	return s.HomeDir
+}
+
+func (s *SystemEnv) GetWorkspace() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Workspace
 }
 
 func (s *SystemEnv) GetTimezone() string {
@@ -592,6 +634,13 @@ func (s *SystemEnv) SetUser(user string) {
 func (s *SystemEnv) SetHomeDir(homeDir string) {
 	s.HomeDir = homeDir
 	s.require(systemEnvFieldHomeDir)
+}
+
+// SetWorkspace sets the Workspace field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SystemEnv) SetWorkspace(workspace *string) {
+	s.Workspace = workspace
+	s.require(systemEnvFieldWorkspace)
 }
 
 // SetTimezone sets the Timezone field and marks it as non-optional;

@@ -100,3 +100,39 @@ func (c *Client) SetConfig(
 	}
 	return response.Body, nil
 }
+
+// Restart the browser session.
+//
+//   - **soft** (default): Reconnect the Playwright session only.
+//   - **hard**: Restart the browser process via supervisorctl, optionally
+//     updating URL blocklist/allowlist policies before restart.
+func (c *Client) Restart(
+	ctx context.Context,
+	request *sandboxsdkgo.RestartRequest,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.Response, error) {
+	response, err := c.WithRawResponse.Restart(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Return the current PAC file for proxy split-routing (if configured).
+func (c *Client) GetProxyPac(
+	ctx context.Context,
+	opts ...option.RequestOption,
+) error {
+	_, err := c.WithRawResponse.GetProxyPac(
+		ctx,
+		opts...,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}

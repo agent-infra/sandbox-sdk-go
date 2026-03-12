@@ -3,8 +3,15 @@
 package client
 
 import (
-	context "context"
+	auth "github.com/agent-infra/sandbox-sdk-go/auth"
+	bash "github.com/agent-infra/sandbox-sdk-go/bash"
 	browser "github.com/agent-infra/sandbox-sdk-go/browser"
+	browsercaptcha "github.com/agent-infra/sandbox-sdk-go/browsercaptcha"
+	browsercookies "github.com/agent-infra/sandbox-sdk-go/browsercookies"
+	browsernetwork "github.com/agent-infra/sandbox-sdk-go/browsernetwork"
+	browserpage "github.com/agent-infra/sandbox-sdk-go/browserpage"
+	browserstate "github.com/agent-infra/sandbox-sdk-go/browserstate"
+	browsertabs "github.com/agent-infra/sandbox-sdk-go/browsertabs"
 	code "github.com/agent-infra/sandbox-sdk-go/code"
 	core "github.com/agent-infra/sandbox-sdk-go/core"
 	file "github.com/agent-infra/sandbox-sdk-go/file"
@@ -13,6 +20,7 @@ import (
 	mcp "github.com/agent-infra/sandbox-sdk-go/mcp"
 	nodejs "github.com/agent-infra/sandbox-sdk-go/nodejs"
 	option "github.com/agent-infra/sandbox-sdk-go/option"
+	proxy "github.com/agent-infra/sandbox-sdk-go/proxy"
 	sandbox "github.com/agent-infra/sandbox-sdk-go/sandbox"
 	shell "github.com/agent-infra/sandbox-sdk-go/shell"
 	skills "github.com/agent-infra/sandbox-sdk-go/skills"
@@ -20,17 +28,25 @@ import (
 )
 
 type Client struct {
-	WithRawResponse *RawClient
-	Sandbox         *sandbox.Client
-	Shell           *shell.Client
-	File            *file.Client
-	Jupyter         *jupyter.Client
-	Nodejs          *nodejs.Client
-	Mcp             *mcp.Client
-	Browser         *browser.Client
-	Code            *code.Client
-	Util            *util.Client
-	Skills          *skills.Client
+	Sandbox        *sandbox.Client
+	Shell          *shell.Client
+	Bash           *bash.Client
+	File           *file.Client
+	Jupyter        *jupyter.Client
+	Nodejs         *nodejs.Client
+	Mcp            *mcp.Client
+	Browser        *browser.Client
+	BrowserPage    *browserpage.Client
+	BrowserTabs    *browsertabs.Client
+	BrowserCookies *browsercookies.Client
+	BrowserState   *browserstate.Client
+	BrowserNetwork *browsernetwork.Client
+	BrowserCaptcha *browsercaptcha.Client
+	Code           *code.Client
+	Util           *util.Client
+	Skills         *skills.Client
+	Proxy          *proxy.Client
+	Auth           *auth.Client
 
 	options *core.RequestOptions
 	baseURL string
@@ -40,19 +56,27 @@ type Client struct {
 func NewClient(opts ...option.RequestOption) *Client {
 	options := core.NewRequestOptions(opts...)
 	return &Client{
-		Sandbox:         sandbox.NewClient(options),
-		Shell:           shell.NewClient(options),
-		File:            file.NewClient(options),
-		Jupyter:         jupyter.NewClient(options),
-		Nodejs:          nodejs.NewClient(options),
-		Mcp:             mcp.NewClient(options),
-		Browser:         browser.NewClient(options),
-		Code:            code.NewClient(options),
-		Util:            util.NewClient(options),
-		Skills:          skills.NewClient(options),
-		WithRawResponse: NewRawClient(options),
-		options:         options,
-		baseURL:         options.BaseURL,
+		Sandbox:        sandbox.NewClient(options),
+		Shell:          shell.NewClient(options),
+		Bash:           bash.NewClient(options),
+		File:           file.NewClient(options),
+		Jupyter:        jupyter.NewClient(options),
+		Nodejs:         nodejs.NewClient(options),
+		Mcp:            mcp.NewClient(options),
+		Browser:        browser.NewClient(options),
+		BrowserPage:    browserpage.NewClient(options),
+		BrowserTabs:    browsertabs.NewClient(options),
+		BrowserCookies: browsercookies.NewClient(options),
+		BrowserState:   browserstate.NewClient(options),
+		BrowserNetwork: browsernetwork.NewClient(options),
+		BrowserCaptcha: browsercaptcha.NewClient(options),
+		Code:           code.NewClient(options),
+		Util:           util.NewClient(options),
+		Skills:         skills.NewClient(options),
+		Proxy:          proxy.NewClient(options),
+		Auth:           auth.NewClient(options),
+		options:        options,
+		baseURL:        options.BaseURL,
 		caller: internal.NewCaller(
 			&internal.CallerParams{
 				Client:      options.HTTPClient,
@@ -60,19 +84,4 @@ func NewClient(opts ...option.RequestOption) *Client {
 			},
 		),
 	}
-}
-
-// Serve the terminal HTML page
-func (c *Client) ServeTerminalTerminalGet(
-	ctx context.Context,
-	opts ...option.RequestOption,
-) (any, error) {
-	response, err := c.WithRawResponse.ServeTerminalTerminalGet(
-		ctx,
-		opts...,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return response.Body, nil
 }
