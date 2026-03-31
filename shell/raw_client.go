@@ -370,6 +370,45 @@ func (r *RawClient) GetTerminalUrl(
 	}, nil
 }
 
+func (r *RawClient) GetSessionStats(
+	ctx context.Context,
+	opts ...option.RequestOption,
+) (*core.Response[*sandboxsdkgo.ResponseShellSessionStats], error) {
+	options := core.NewRequestOptions(opts...)
+	baseURL := internal.ResolveBaseURL(
+		options.BaseURL,
+		r.baseURL,
+		"",
+	)
+	endpointURL := baseURL + "/v1/shell/sessions/stats"
+	headers := internal.MergeHeaders(
+		r.options.ToHeader(),
+		options.ToHeader(),
+	)
+	var response *sandboxsdkgo.ResponseShellSessionStats
+	raw, err := r.caller.Call(
+		ctx,
+		&internal.CallParams{
+			URL:             endpointURL,
+			Method:          http.MethodGet,
+			Headers:         headers,
+			MaxAttempts:     options.MaxAttempts,
+			BodyProperties:  options.BodyProperties,
+			QueryParameters: options.QueryParameters,
+			Client:          options.HTTPClient,
+			Response:        &response,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &core.Response[*sandboxsdkgo.ResponseShellSessionStats]{
+		StatusCode: raw.StatusCode,
+		Header:     raw.Header,
+		Body:       response,
+	}, nil
+}
+
 func (r *RawClient) ListSessions(
 	ctx context.Context,
 	opts ...option.RequestOption,

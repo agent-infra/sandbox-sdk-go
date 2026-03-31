@@ -188,11 +188,14 @@ var (
 	fileGrepRequestFieldContextAfter    = big.NewInt(1 << 7)
 	fileGrepRequestFieldMaxResults      = big.NewInt(1 << 8)
 	fileGrepRequestFieldMaxFileSize     = big.NewInt(1 << 9)
-	fileGrepRequestFieldRecursive       = big.NewInt(1 << 10)
+	fileGrepRequestFieldMultiline       = big.NewInt(1 << 10)
+	fileGrepRequestFieldOffset          = big.NewInt(1 << 11)
+	fileGrepRequestFieldType            = big.NewInt(1 << 12)
+	fileGrepRequestFieldRecursive       = big.NewInt(1 << 13)
 )
 
 type FileGrepRequest struct {
-	// Directory path to search
+	// File or directory path to search
 	Path string `json:"path" url:"-"`
 	// Search pattern (regex or fixed string)
 	Pattern string `json:"pattern" url:"-"`
@@ -212,6 +215,12 @@ type FileGrepRequest struct {
 	MaxResults *int `json:"max_results,omitempty" url:"-"`
 	// Skip files larger than this size (e.g., 1M, 500K)
 	MaxFileSize *string `json:"max_file_size,omitempty" url:"-"`
+	// Enable multiline matching where . matches newlines and patterns can span lines (rg -U --multiline-dotall)
+	Multiline *bool `json:"multiline,omitempty" url:"-"`
+	// Skip first N matches before returning results (for pagination)
+	Offset *int `json:"offset,omitempty" url:"-"`
+	// File type filter using ripgrep type aliases (e.g., "py", "js", "rust", "go"). Maps to rg --type.
+	Type *string `json:"type,omitempty" url:"-"`
 	// Search recursively
 	Recursive *bool `json:"recursive,omitempty" url:"-"`
 
@@ -294,6 +303,27 @@ func (f *FileGrepRequest) SetMaxResults(maxResults *int) {
 func (f *FileGrepRequest) SetMaxFileSize(maxFileSize *string) {
 	f.MaxFileSize = maxFileSize
 	f.require(fileGrepRequestFieldMaxFileSize)
+}
+
+// SetMultiline sets the Multiline field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetMultiline(multiline *bool) {
+	f.Multiline = multiline
+	f.require(fileGrepRequestFieldMultiline)
+}
+
+// SetOffset sets the Offset field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetOffset(offset *int) {
+	f.Offset = offset
+	f.require(fileGrepRequestFieldOffset)
+}
+
+// SetType sets the Type field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileGrepRequest) SetType(type_ *string) {
+	f.Type = type_
+	f.require(fileGrepRequestFieldType)
 }
 
 // SetRecursive sets the Recursive field and marks it as non-optional;
@@ -3793,6 +3823,37 @@ func (s *StrReplaceEditorResult) String() string {
 	return fmt.Sprintf("%#v", s)
 }
 
+type AppSchemasFileWatchWaitRequestEventTypesItem string
+
+const (
+	AppSchemasFileWatchWaitRequestEventTypesItemCreate AppSchemasFileWatchWaitRequestEventTypesItem = "create"
+	AppSchemasFileWatchWaitRequestEventTypesItemWrite  AppSchemasFileWatchWaitRequestEventTypesItem = "write"
+	AppSchemasFileWatchWaitRequestEventTypesItemRemove AppSchemasFileWatchWaitRequestEventTypesItem = "remove"
+	AppSchemasFileWatchWaitRequestEventTypesItemRename AppSchemasFileWatchWaitRequestEventTypesItem = "rename"
+	AppSchemasFileWatchWaitRequestEventTypesItemChmod  AppSchemasFileWatchWaitRequestEventTypesItem = "chmod"
+)
+
+func NewAppSchemasFileWatchWaitRequestEventTypesItemFromString(s string) (AppSchemasFileWatchWaitRequestEventTypesItem, error) {
+	switch s {
+	case "create":
+		return AppSchemasFileWatchWaitRequestEventTypesItemCreate, nil
+	case "write":
+		return AppSchemasFileWatchWaitRequestEventTypesItemWrite, nil
+	case "remove":
+		return AppSchemasFileWatchWaitRequestEventTypesItemRemove, nil
+	case "rename":
+		return AppSchemasFileWatchWaitRequestEventTypesItemRename, nil
+	case "chmod":
+		return AppSchemasFileWatchWaitRequestEventTypesItemChmod, nil
+	}
+	var t AppSchemasFileWatchWaitRequestEventTypesItem
+	return "", fmt.Errorf("%s is not a valid %T", s, t)
+}
+
+func (a AppSchemasFileWatchWaitRequestEventTypesItem) Ptr() *AppSchemasFileWatchWaitRequestEventTypesItem {
+	return &a
+}
+
 // The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`, `undo_edit`.
 type Command string
 
@@ -3863,6 +3924,164 @@ func (b *BodyUploadFile) require(field *big.Int) {
 		b.explicitFields = big.NewInt(0)
 	}
 	b.explicitFields.Or(b.explicitFields, field)
+}
+
+var (
+	createWatchRequestFieldPath            = big.NewInt(1 << 0)
+	createWatchRequestFieldRecursive       = big.NewInt(1 << 1)
+	createWatchRequestFieldExclude         = big.NewInt(1 << 2)
+	createWatchRequestFieldDebounce        = big.NewInt(1 << 3)
+	createWatchRequestFieldIncludePatterns = big.NewInt(1 << 4)
+)
+
+type CreateWatchRequest struct {
+	// 监听目录或文件路径
+	Path string `json:"path" url:"-"`
+	// 是否递归子目录
+	Recursive *bool `json:"recursive,omitempty" url:"-"`
+	// 排除的目录/glob 模式
+	Exclude []string `json:"exclude,omitempty" url:"-"`
+	// 去抖动窗口(ms)
+	Debounce *int `json:"debounce,omitempty" url:"-"`
+	// glob 过滤，空=全部通过
+	IncludePatterns []string `json:"include_patterns,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (c *CreateWatchRequest) require(field *big.Int) {
+	if c.explicitFields == nil {
+		c.explicitFields = big.NewInt(0)
+	}
+	c.explicitFields.Or(c.explicitFields, field)
+}
+
+// SetPath sets the Path field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (c *CreateWatchRequest) SetPath(path string) {
+	c.Path = path
+	c.require(createWatchRequestFieldPath)
+}
+
+// SetRecursive sets the Recursive field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (c *CreateWatchRequest) SetRecursive(recursive *bool) {
+	c.Recursive = recursive
+	c.require(createWatchRequestFieldRecursive)
+}
+
+// SetExclude sets the Exclude field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (c *CreateWatchRequest) SetExclude(exclude []string) {
+	c.Exclude = exclude
+	c.require(createWatchRequestFieldExclude)
+}
+
+// SetDebounce sets the Debounce field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (c *CreateWatchRequest) SetDebounce(debounce *int) {
+	c.Debounce = debounce
+	c.require(createWatchRequestFieldDebounce)
+}
+
+// SetIncludePatterns sets the IncludePatterns field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (c *CreateWatchRequest) SetIncludePatterns(includePatterns []string) {
+	c.IncludePatterns = includePatterns
+	c.require(createWatchRequestFieldIncludePatterns)
+}
+
+var (
+	pollRequestFieldCursor  = big.NewInt(1 << 0)
+	pollRequestFieldLimit   = big.NewInt(1 << 1)
+	pollRequestFieldTimeout = big.NewInt(1 << 2)
+)
+
+type PollRequest struct {
+	// 上次返回的游标值，只返回 seq > cursor 的事件
+	Cursor *int `json:"cursor,omitempty" url:"-"`
+	// 最多返回条数
+	Limit *int `json:"limit,omitempty" url:"-"`
+	// 长轮询等待秒数，0=立即返回
+	Timeout *int `json:"timeout,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (p *PollRequest) require(field *big.Int) {
+	if p.explicitFields == nil {
+		p.explicitFields = big.NewInt(0)
+	}
+	p.explicitFields.Or(p.explicitFields, field)
+}
+
+// SetCursor sets the Cursor field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *PollRequest) SetCursor(cursor *int) {
+	p.Cursor = cursor
+	p.require(pollRequestFieldCursor)
+}
+
+// SetLimit sets the Limit field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *PollRequest) SetLimit(limit *int) {
+	p.Limit = limit
+	p.require(pollRequestFieldLimit)
+}
+
+// SetTimeout sets the Timeout field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *PollRequest) SetTimeout(timeout *int) {
+	p.Timeout = timeout
+	p.require(pollRequestFieldTimeout)
+}
+
+var (
+	fileWatchWaitRequestFieldPath       = big.NewInt(1 << 0)
+	fileWatchWaitRequestFieldTimeout    = big.NewInt(1 << 1)
+	fileWatchWaitRequestFieldEventTypes = big.NewInt(1 << 2)
+)
+
+type FileWatchWaitRequest struct {
+	// 等待的文件路径（精确匹配）
+	Path string `json:"path" url:"-"`
+	// 最大等待秒数
+	Timeout *int `json:"timeout,omitempty" url:"-"`
+	// 关注的事件类型
+	EventTypes []AppSchemasFileWatchWaitRequestEventTypesItem `json:"event_types,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (f *FileWatchWaitRequest) require(field *big.Int) {
+	if f.explicitFields == nil {
+		f.explicitFields = big.NewInt(0)
+	}
+	f.explicitFields.Or(f.explicitFields, field)
+}
+
+// SetPath sets the Path field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileWatchWaitRequest) SetPath(path string) {
+	f.Path = path
+	f.require(fileWatchWaitRequestFieldPath)
+}
+
+// SetTimeout sets the Timeout field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileWatchWaitRequest) SetTimeout(timeout *int) {
+	f.Timeout = timeout
+	f.require(fileWatchWaitRequestFieldTimeout)
+}
+
+// SetEventTypes sets the EventTypes field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (f *FileWatchWaitRequest) SetEventTypes(eventTypes []AppSchemasFileWatchWaitRequestEventTypesItem) {
+	f.EventTypes = eventTypes
+	f.require(fileWatchWaitRequestFieldEventTypes)
 }
 
 var (
