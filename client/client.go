@@ -14,6 +14,7 @@ import (
 	browsertabs "github.com/agent-infra/sandbox-sdk-go/browsertabs"
 	code "github.com/agent-infra/sandbox-sdk-go/code"
 	core "github.com/agent-infra/sandbox-sdk-go/core"
+	display "github.com/agent-infra/sandbox-sdk-go/display"
 	file "github.com/agent-infra/sandbox-sdk-go/file"
 	internal "github.com/agent-infra/sandbox-sdk-go/internal"
 	jupyter "github.com/agent-infra/sandbox-sdk-go/jupyter"
@@ -46,6 +47,7 @@ type Client struct {
 	Util           *util.Client
 	Skills         *skills.Client
 	Proxy          *proxy.Client
+	Display        *display.Client
 	Auth           *auth.Client
 
 	options *core.RequestOptions
@@ -74,6 +76,7 @@ func NewClient(opts ...option.RequestOption) *Client {
 		Util:           util.NewClient(options),
 		Skills:         skills.NewClient(options),
 		Proxy:          proxy.NewClient(options),
+		Display:        display.NewClient(options),
 		Auth:           auth.NewClient(options),
 		options:        options,
 		baseURL:        options.BaseURL,

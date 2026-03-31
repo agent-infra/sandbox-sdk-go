@@ -126,6 +126,219 @@ client.Sandbox.GetNodejsPackages(
 </dl>
 </details>
 
+<details><summary><code>client.Sandbox.ListHooks() -> *sandboxsdkgo.ResponseListSandboxHook</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+List registered lifecycle hooks, optionally filtered by event.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Sandbox.ListHooks(
+        context.TODO(),
+        &sandboxsdkgo.SandboxListHooksRequest{
+            Event: sandboxsdkgo.String(
+                "event",
+            ),
+        },
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**event:** `*string` 
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Sandbox.RegisterHook(request) -> *sandboxsdkgo.ResponseSandboxHook</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Register a lifecycle hook. Currently supported events: shutdown.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Sandbox.RegisterHook(
+        context.TODO(),
+        &sandboxsdkgo.RegisterHookRequest{
+            Name: "name",
+            Command: "command",
+        },
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**name:** `string` — Unique name for this hook
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**event:** `*string` — Lifecycle event: "shutdown"
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**command:** `string` — Shell command to execute
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**timeout:** `*float64` — Per-hook timeout in seconds
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**priority:** `*int` — Execution priority (lower = earlier). Same priority hooks run in parallel
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Sandbox.RemoveHook(Name) -> *sandboxsdkgo.Response</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Remove a hook by name. ENV hooks cannot be removed.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Sandbox.RemoveHook(
+        context.TODO(),
+        "name",
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**name:** `string` 
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 ## Shell
 <details><summary><code>client.Shell.ExecCommand(request) -> *sandboxsdkgo.ResponseShellCommandResult</code></summary>
 <dl>
@@ -728,6 +941,48 @@ client.Shell.GetTerminalUrl(
 </dl>
 </details>
 
+<details><summary><code>client.Shell.GetSessionStats() -> *sandboxsdkgo.ResponseShellSessionStats</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Return aggregate statistics for shell sessions.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Shell.GetSessionStats(
+        context.TODO(),
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
 <details><summary><code>client.Shell.ListSessions() -> *sandboxsdkgo.ResponseActiveShellSessionsResult</code></summary>
 <dl>
 <dd>
@@ -925,7 +1180,7 @@ client.Bash.Exec(
 <dl>
 <dd>
 
-**sessionId:** `*string` — Target session ID. If not provided, a new session is created automatically.
+**sessionId:** `*string` — Target session ID. If not provided, a new session is created automatically. Reuse the same session_id to maintain state (env vars, cwd, etc.) across commands.
     
 </dd>
 </dl>
@@ -941,7 +1196,7 @@ client.Bash.Exec(
 <dl>
 <dd>
 
-**execDir:** `*string` — Working directory for command execution (absolute path)
+**execDir:** `*string` — Working directory (absolute path). Takes effect on every call — if the session already exists, the working directory is updated persistently.
     
 </dd>
 </dl>
@@ -1893,7 +2148,7 @@ client.File.GrepFiles(
 <dl>
 <dd>
 
-**path:** `string` — Directory path to search
+**path:** `string` — File or directory path to search
     
 </dd>
 </dl>
@@ -1966,6 +2221,30 @@ client.File.GrepFiles(
 <dd>
 
 **maxFileSize:** `*string` — Skip files larger than this size (e.g., 1M, 500K)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**multiline:** `*bool` — Enable multiline matching where . matches newlines and patterns can span lines (rg -U --multiline-dotall)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**offset:** `*int` — Skip first N matches before returning results (for pagination)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**type_:** `*string` — File type filter using ripgrep type aliases (e.g., "py", "js", "rust", "go"). Maps to rg --type.
     
 </dd>
 </dl>
@@ -2491,6 +2770,331 @@ client.File.StrReplaceEditor(
 <dd>
 
 **enableMetadata:** `*bool` — Optional parameter for `view` command. If true, returns file metadata (total pages, sheets, slides, etc.) in the response.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.File.WatchList() -> any</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.File.WatchList(
+        context.TODO(),
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.File.WatchCreate(request) -> any</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.File.WatchCreate(
+        context.TODO(),
+        &sandboxsdkgo.CreateWatchRequest{
+            Path: "path",
+        },
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**path:** `string` — 监听目录或文件路径
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**recursive:** `*bool` — 是否递归子目录
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**exclude:** `[]string` — 排除的目录/glob 模式
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**debounce:** `*int` — 去抖动窗口(ms)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**includePatterns:** `[]string` — glob 过滤，空=全部通过
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.File.WatchEvents(WatcherId) -> any</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.File.WatchEvents(
+        context.TODO(),
+        "watcher_id",
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**watcherId:** `string` 
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.File.WatchPoll(WatcherId, request) -> any</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.File.WatchPoll(
+        context.TODO(),
+        "watcher_id",
+        &sandboxsdkgo.PollRequest{},
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**watcherId:** `string` 
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**cursor:** `*int` — 上次返回的游标值，只返回 seq > cursor 的事件
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**limit:** `*int` — 最多返回条数
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**timeout:** `*int` — 长轮询等待秒数，0=立即返回
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.File.WatchWait(request) -> any</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.File.WatchWait(
+        context.TODO(),
+        &sandboxsdkgo.FileWatchWaitRequest{
+            Path: "path",
+        },
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**path:** `string` — 等待的文件路径（精确匹配）
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**timeout:** `*int` — 最大等待秒数
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**eventTypes:** `[]*sandboxsdkgo.AppSchemasFileWatchWaitRequestEventTypesItem` — 关注的事件类型
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.File.WatchStop(WatcherId) -> any</code></summary>
+<dl>
+<dd>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.File.WatchStop(
+        context.TODO(),
+        "watcher_id",
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**watcherId:** `string` 
     
 </dd>
 </dl>
@@ -7518,6 +8122,314 @@ client.Proxy.Diagnose(
 <dd>
 
 **url:** `string` — URL to diagnose routing for
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Proxy.Health() -> *sandboxsdkgo.ResponseProxyHealthCheck</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Check proxy subsystem health: GOST alive, nginx alive, config consistency.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Proxy.Health(
+        context.TODO(),
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Proxy.GetUpstream() -> *sandboxsdkgo.ResponseUnionProxyUpstreamInfoNoneType</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Get the current upstream proxy configuration.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Proxy.GetUpstream(
+        context.TODO(),
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Proxy.SetUpstream(request) -> *sandboxsdkgo.ResponseProxyUpstreamInfo</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Set or update the upstream proxy. Supports user:pass@host:port format.
+
+Takes effect immediately — no browser restart needed.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Proxy.SetUpstream(
+        context.TODO(),
+        &sandboxsdkgo.ProxyUpstreamUpdateRequest{
+            Server: "proxy.example.com:3128",
+        },
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**server:** `string` — Upstream proxy server. Supports plain host:port or user:pass@host:port
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**authCmd:** `*string` — Optional shell command to obtain proxy credentials. The command stdout should be "username:password". When set, the result is injected into the server URL, replacing any inline credentials.
+    
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+<details><summary><code>client.Proxy.RemoveUpstream() -> *sandboxsdkgo.Response</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Remove upstream proxy (switch to direct mode).
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Proxy.RemoveUpstream(
+        context.TODO(),
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+
+</dd>
+</dl>
+</details>
+
+## Display
+<details><summary><code>client.Display.Record(request) -> *sandboxsdkgo.ResponseDisplayRecordResult</code></summary>
+<dl>
+<dd>
+
+#### 📝 Description
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+Control display screen recording (start/stop/status).
+
+Records the entire X11 desktop using ffmpeg x11grab,
+including browser UI, multiple tabs, popups, terminal, etc.
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### 🔌 Usage
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+```go
+client.Display.Record(
+        context.TODO(),
+        &sandboxsdkgo.DisplayRecordRequest{
+            Action: sandboxsdkgo.DisplayRecordRequestActionStart,
+        },
+    )
+}
+```
+</dd>
+</dl>
+</dd>
+</dl>
+
+#### ⚙️ Parameters
+
+<dl>
+<dd>
+
+<dl>
+<dd>
+
+**action:** `*sandboxsdkgo.DisplayRecordRequestAction` — Recording action: start, stop, or status
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**savePath:** `*string` — Output file path (default: /tmp/recordings/recording_{timestamp}.mp4)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**fps:** `*int` — Frames per second
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**crf:** `*int` — H.264 CRF quality (0=lossless, 51=worst)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**maxDuration:** `*float64` — Max recording duration in seconds
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**width:** `*int` — Video width in pixels (auto-detected from X11 if omitted)
+    
+</dd>
+</dl>
+
+<dl>
+<dd>
+
+**height:** `*int` — Video height in pixels (auto-detected from X11 if omitted)
     
 </dd>
 </dl>

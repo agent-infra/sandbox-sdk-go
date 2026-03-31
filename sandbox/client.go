@@ -76,3 +76,54 @@ func (c *Client) GetNodejsPackages(
 	}
 	return response.Body, nil
 }
+
+// List registered lifecycle hooks, optionally filtered by event.
+func (c *Client) ListHooks(
+	ctx context.Context,
+	request *sandboxsdkgo.SandboxListHooksRequest,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseListSandboxHook, error) {
+	response, err := c.WithRawResponse.ListHooks(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Register a lifecycle hook. Currently supported events: shutdown.
+func (c *Client) RegisterHook(
+	ctx context.Context,
+	request *sandboxsdkgo.RegisterHookRequest,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseSandboxHook, error) {
+	response, err := c.WithRawResponse.RegisterHook(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Remove a hook by name. ENV hooks cannot be removed.
+func (c *Client) RemoveHook(
+	ctx context.Context,
+	name string,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.Response, error) {
+	response, err := c.WithRawResponse.RemoveHook(
+		ctx,
+		name,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}

@@ -169,6 +169,21 @@ func (c *Client) GetTerminalUrl(
 	return response.Body, nil
 }
 
+// Return aggregate statistics for shell sessions.
+func (c *Client) GetSessionStats(
+	ctx context.Context,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseShellSessionStats, error) {
+	response, err := c.WithRawResponse.GetSessionStats(
+		ctx,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
 // List all active shell sessions
 func (c *Client) ListSessions(
 	ctx context.Context,

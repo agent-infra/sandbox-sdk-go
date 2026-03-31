@@ -955,6 +955,136 @@ func (r *ResponseShellKillResult) String() string {
 }
 
 var (
+	responseShellSessionStatsFieldSuccess = big.NewInt(1 << 0)
+	responseShellSessionStatsFieldMessage = big.NewInt(1 << 1)
+	responseShellSessionStatsFieldData    = big.NewInt(1 << 2)
+	responseShellSessionStatsFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseShellSessionStats struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *ShellSessionStats `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseShellSessionStats) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseShellSessionStats) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseShellSessionStats) GetData() *ShellSessionStats {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseShellSessionStats) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseShellSessionStats) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseShellSessionStats) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseShellSessionStats) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseShellSessionStatsFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseShellSessionStats) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseShellSessionStatsFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseShellSessionStats) SetData(data *ShellSessionStats) {
+	r.Data = data
+	r.require(responseShellSessionStatsFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseShellSessionStats) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseShellSessionStatsFieldHint)
+}
+
+func (r *ResponseShellSessionStats) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseShellSessionStats
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseShellSessionStats(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseShellSessionStats) MarshalJSON() ([]byte, error) {
+	type embed ResponseShellSessionStats
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseShellSessionStats) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
 	responseShellViewResultFieldSuccess = big.NewInt(1 << 0)
 	responseShellViewResultFieldMessage = big.NewInt(1 << 1)
 	responseShellViewResultFieldData    = big.NewInt(1 << 2)
@@ -1886,6 +2016,171 @@ func (s *ShellSessionInfo) MarshalJSON() ([]byte, error) {
 }
 
 func (s *ShellSessionInfo) String() string {
+	if len(s.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(s.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(s); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", s)
+}
+
+// Shell session statistics model
+var (
+	shellSessionStatsFieldTotalSessions  = big.NewInt(1 << 0)
+	shellSessionStatsFieldActiveSessions = big.NewInt(1 << 1)
+	shellSessionStatsFieldIdleSessions   = big.NewInt(1 << 2)
+	shellSessionStatsFieldMaxSessions    = big.NewInt(1 << 3)
+	shellSessionStatsFieldSessionTimeout = big.NewInt(1 << 4)
+	shellSessionStatsFieldUsageRatio     = big.NewInt(1 << 5)
+)
+
+type ShellSessionStats struct {
+	// Total number of sessions
+	TotalSessions int `json:"total_sessions" url:"total_sessions"`
+	// Number of active sessions (used within last 5 minutes)
+	ActiveSessions int `json:"active_sessions" url:"active_sessions"`
+	// Number of idle sessions
+	IdleSessions int `json:"idle_sessions" url:"idle_sessions"`
+	// Maximum allowed sessions
+	MaxSessions int `json:"max_sessions" url:"max_sessions"`
+	// Session timeout in seconds
+	SessionTimeout int `json:"session_timeout" url:"session_timeout"`
+	// Session usage ratio (0.0 to 1.0)
+	UsageRatio float64 `json:"usage_ratio" url:"usage_ratio"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (s *ShellSessionStats) GetTotalSessions() int {
+	if s == nil {
+		return 0
+	}
+	return s.TotalSessions
+}
+
+func (s *ShellSessionStats) GetActiveSessions() int {
+	if s == nil {
+		return 0
+	}
+	return s.ActiveSessions
+}
+
+func (s *ShellSessionStats) GetIdleSessions() int {
+	if s == nil {
+		return 0
+	}
+	return s.IdleSessions
+}
+
+func (s *ShellSessionStats) GetMaxSessions() int {
+	if s == nil {
+		return 0
+	}
+	return s.MaxSessions
+}
+
+func (s *ShellSessionStats) GetSessionTimeout() int {
+	if s == nil {
+		return 0
+	}
+	return s.SessionTimeout
+}
+
+func (s *ShellSessionStats) GetUsageRatio() float64 {
+	if s == nil {
+		return 0
+	}
+	return s.UsageRatio
+}
+
+func (s *ShellSessionStats) GetExtraProperties() map[string]interface{} {
+	return s.extraProperties
+}
+
+func (s *ShellSessionStats) require(field *big.Int) {
+	if s.explicitFields == nil {
+		s.explicitFields = big.NewInt(0)
+	}
+	s.explicitFields.Or(s.explicitFields, field)
+}
+
+// SetTotalSessions sets the TotalSessions field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellSessionStats) SetTotalSessions(totalSessions int) {
+	s.TotalSessions = totalSessions
+	s.require(shellSessionStatsFieldTotalSessions)
+}
+
+// SetActiveSessions sets the ActiveSessions field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellSessionStats) SetActiveSessions(activeSessions int) {
+	s.ActiveSessions = activeSessions
+	s.require(shellSessionStatsFieldActiveSessions)
+}
+
+// SetIdleSessions sets the IdleSessions field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellSessionStats) SetIdleSessions(idleSessions int) {
+	s.IdleSessions = idleSessions
+	s.require(shellSessionStatsFieldIdleSessions)
+}
+
+// SetMaxSessions sets the MaxSessions field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellSessionStats) SetMaxSessions(maxSessions int) {
+	s.MaxSessions = maxSessions
+	s.require(shellSessionStatsFieldMaxSessions)
+}
+
+// SetSessionTimeout sets the SessionTimeout field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellSessionStats) SetSessionTimeout(sessionTimeout int) {
+	s.SessionTimeout = sessionTimeout
+	s.require(shellSessionStatsFieldSessionTimeout)
+}
+
+// SetUsageRatio sets the UsageRatio field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *ShellSessionStats) SetUsageRatio(usageRatio float64) {
+	s.UsageRatio = usageRatio
+	s.require(shellSessionStatsFieldUsageRatio)
+}
+
+func (s *ShellSessionStats) UnmarshalJSON(data []byte) error {
+	type unmarshaler ShellSessionStats
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*s = ShellSessionStats(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *s)
+	if err != nil {
+		return err
+	}
+	s.extraProperties = extraProperties
+	s.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (s *ShellSessionStats) MarshalJSON() ([]byte, error) {
+	type embed ShellSessionStats
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*s),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, s.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (s *ShellSessionStats) String() string {
 	if len(s.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(s.rawJSON); err == nil {
 			return value

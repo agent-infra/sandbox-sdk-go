@@ -227,3 +227,99 @@ func (c *Client) StrReplaceEditor(
 	}
 	return response.Body, nil
 }
+
+func (c *Client) WatchList(
+	ctx context.Context,
+	opts ...option.RequestOption,
+) (any, error) {
+	response, err := c.WithRawResponse.WatchList(
+		ctx,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+func (c *Client) WatchCreate(
+	ctx context.Context,
+	request *sandboxsdkgo.CreateWatchRequest,
+	opts ...option.RequestOption,
+) (any, error) {
+	response, err := c.WithRawResponse.WatchCreate(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+func (c *Client) WatchEvents(
+	ctx context.Context,
+	watcherId string,
+	opts ...option.RequestOption,
+) (any, error) {
+	response, err := c.WithRawResponse.WatchEvents(
+		ctx,
+		watcherId,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+func (c *Client) WatchPoll(
+	ctx context.Context,
+	watcherId string,
+	request *sandboxsdkgo.PollRequest,
+	opts ...option.RequestOption,
+) (any, error) {
+	response, err := c.WithRawResponse.WatchPoll(
+		ctx,
+		watcherId,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+func (c *Client) WatchWait(
+	ctx context.Context,
+	request *sandboxsdkgo.FileWatchWaitRequest,
+	opts ...option.RequestOption,
+) (any, error) {
+	response, err := c.WithRawResponse.WatchWait(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+func (c *Client) WatchStop(
+	ctx context.Context,
+	watcherId string,
+	opts ...option.RequestOption,
+) (any, error) {
+	response, err := c.WithRawResponse.WatchStop(
+		ctx,
+		watcherId,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}

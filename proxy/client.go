@@ -146,3 +146,67 @@ func (c *Client) Diagnose(
 	}
 	return response.Body, nil
 }
+
+// Check proxy subsystem health: GOST alive, nginx alive, config consistency.
+func (c *Client) Health(
+	ctx context.Context,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseProxyHealthCheck, error) {
+	response, err := c.WithRawResponse.Health(
+		ctx,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Get the current upstream proxy configuration.
+func (c *Client) GetUpstream(
+	ctx context.Context,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseUnionProxyUpstreamInfoNoneType, error) {
+	response, err := c.WithRawResponse.GetUpstream(
+		ctx,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Set or update the upstream proxy. Supports user:pass@host:port format.
+//
+// Takes effect immediately — no browser restart needed.
+func (c *Client) SetUpstream(
+	ctx context.Context,
+	request *sandboxsdkgo.ProxyUpstreamUpdateRequest,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.ResponseProxyUpstreamInfo, error) {
+	response, err := c.WithRawResponse.SetUpstream(
+		ctx,
+		request,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
+// Remove upstream proxy (switch to direct mode).
+func (c *Client) RemoveUpstream(
+	ctx context.Context,
+	opts ...option.RequestOption,
+) (*sandboxsdkgo.Response, error) {
+	response, err := c.WithRawResponse.RemoveUpstream(
+		ctx,
+		opts...,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}

@@ -9,6 +9,97 @@ import (
 	big "math/big"
 )
 
+var (
+	sandboxListHooksRequestFieldEvent = big.NewInt(1 << 0)
+)
+
+type SandboxListHooksRequest struct {
+	Event *string `json:"-" url:"event,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (s *SandboxListHooksRequest) require(field *big.Int) {
+	if s.explicitFields == nil {
+		s.explicitFields = big.NewInt(0)
+	}
+	s.explicitFields.Or(s.explicitFields, field)
+}
+
+// SetEvent sets the Event field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxListHooksRequest) SetEvent(event *string) {
+	s.Event = event
+	s.require(sandboxListHooksRequestFieldEvent)
+}
+
+var (
+	registerHookRequestFieldName     = big.NewInt(1 << 0)
+	registerHookRequestFieldEvent    = big.NewInt(1 << 1)
+	registerHookRequestFieldCommand  = big.NewInt(1 << 2)
+	registerHookRequestFieldTimeout  = big.NewInt(1 << 3)
+	registerHookRequestFieldPriority = big.NewInt(1 << 4)
+)
+
+type RegisterHookRequest struct {
+	// Unique name for this hook
+	Name string `json:"name" url:"-"`
+	// Lifecycle event: "shutdown"
+	Event *string `json:"event,omitempty" url:"-"`
+	// Shell command to execute
+	Command string `json:"command" url:"-"`
+	// Per-hook timeout in seconds
+	Timeout *float64 `json:"timeout,omitempty" url:"-"`
+	// Execution priority (lower = earlier). Same priority hooks run in parallel
+	Priority *int `json:"priority,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (r *RegisterHookRequest) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetName sets the Name field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RegisterHookRequest) SetName(name string) {
+	r.Name = name
+	r.require(registerHookRequestFieldName)
+}
+
+// SetEvent sets the Event field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RegisterHookRequest) SetEvent(event *string) {
+	r.Event = event
+	r.require(registerHookRequestFieldEvent)
+}
+
+// SetCommand sets the Command field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RegisterHookRequest) SetCommand(command string) {
+	r.Command = command
+	r.require(registerHookRequestFieldCommand)
+}
+
+// SetTimeout sets the Timeout field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RegisterHookRequest) SetTimeout(timeout *float64) {
+	r.Timeout = timeout
+	r.require(registerHookRequestFieldTimeout)
+}
+
+// SetPriority sets the Priority field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *RegisterHookRequest) SetPriority(priority *int) {
+	r.Priority = priority
+	r.require(registerHookRequestFieldPriority)
+}
+
 // Describe an available command-line tool.
 var (
 	availableToolFieldName        = big.NewInt(1 << 0)
@@ -104,6 +195,266 @@ func (a *AvailableTool) String() string {
 		return value
 	}
 	return fmt.Sprintf("%#v", a)
+}
+
+var (
+	responseListSandboxHookFieldSuccess = big.NewInt(1 << 0)
+	responseListSandboxHookFieldMessage = big.NewInt(1 << 1)
+	responseListSandboxHookFieldData    = big.NewInt(1 << 2)
+	responseListSandboxHookFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseListSandboxHook struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data []*SandboxHook `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseListSandboxHook) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseListSandboxHook) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseListSandboxHook) GetData() []*SandboxHook {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseListSandboxHook) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseListSandboxHook) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseListSandboxHook) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseListSandboxHook) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseListSandboxHookFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseListSandboxHook) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseListSandboxHookFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseListSandboxHook) SetData(data []*SandboxHook) {
+	r.Data = data
+	r.require(responseListSandboxHookFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseListSandboxHook) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseListSandboxHookFieldHint)
+}
+
+func (r *ResponseListSandboxHook) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseListSandboxHook
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseListSandboxHook(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseListSandboxHook) MarshalJSON() ([]byte, error) {
+	type embed ResponseListSandboxHook
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseListSandboxHook) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseSandboxHookFieldSuccess = big.NewInt(1 << 0)
+	responseSandboxHookFieldMessage = big.NewInt(1 << 1)
+	responseSandboxHookFieldData    = big.NewInt(1 << 2)
+	responseSandboxHookFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseSandboxHook struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *SandboxHook `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseSandboxHook) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseSandboxHook) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseSandboxHook) GetData() *SandboxHook {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseSandboxHook) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseSandboxHook) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseSandboxHook) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseSandboxHook) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseSandboxHookFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseSandboxHook) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseSandboxHookFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseSandboxHook) SetData(data *SandboxHook) {
+	r.Data = data
+	r.require(responseSandboxHookFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseSandboxHook) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseSandboxHookFieldHint)
+}
+
+func (r *ResponseSandboxHook) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseSandboxHook
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseSandboxHook(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseSandboxHook) MarshalJSON() ([]byte, error) {
+	type embed ResponseSandboxHook
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseSandboxHook) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
 }
 
 // version, path, etc. (python3, python3.11, python3.12, pip3, pip, uv, jupyter)
@@ -301,6 +652,171 @@ func (s *SandboxDetail) MarshalJSON() ([]byte, error) {
 }
 
 func (s *SandboxDetail) String() string {
+	if len(s.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(s.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(s); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", s)
+}
+
+// A registered lifecycle hook.
+var (
+	sandboxHookFieldName     = big.NewInt(1 << 0)
+	sandboxHookFieldEvent    = big.NewInt(1 << 1)
+	sandboxHookFieldCommand  = big.NewInt(1 << 2)
+	sandboxHookFieldTimeout  = big.NewInt(1 << 3)
+	sandboxHookFieldPriority = big.NewInt(1 << 4)
+	sandboxHookFieldSource   = big.NewInt(1 << 5)
+)
+
+type SandboxHook struct {
+	// Unique name for this hook
+	Name string `json:"name" url:"name"`
+	// Lifecycle event: "shutdown"
+	Event *string `json:"event,omitempty" url:"event,omitempty"`
+	// Shell command to execute
+	Command string `json:"command" url:"command"`
+	// Per-hook timeout in seconds
+	Timeout *float64 `json:"timeout,omitempty" url:"timeout,omitempty"`
+	// Execution priority (lower = earlier). Same priority hooks run in parallel
+	Priority *int `json:"priority,omitempty" url:"priority,omitempty"`
+	// Registration source: "env" or "api"
+	Source *string `json:"source,omitempty" url:"source,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (s *SandboxHook) GetName() string {
+	if s == nil {
+		return ""
+	}
+	return s.Name
+}
+
+func (s *SandboxHook) GetEvent() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Event
+}
+
+func (s *SandboxHook) GetCommand() string {
+	if s == nil {
+		return ""
+	}
+	return s.Command
+}
+
+func (s *SandboxHook) GetTimeout() *float64 {
+	if s == nil {
+		return nil
+	}
+	return s.Timeout
+}
+
+func (s *SandboxHook) GetPriority() *int {
+	if s == nil {
+		return nil
+	}
+	return s.Priority
+}
+
+func (s *SandboxHook) GetSource() *string {
+	if s == nil {
+		return nil
+	}
+	return s.Source
+}
+
+func (s *SandboxHook) GetExtraProperties() map[string]interface{} {
+	return s.extraProperties
+}
+
+func (s *SandboxHook) require(field *big.Int) {
+	if s.explicitFields == nil {
+		s.explicitFields = big.NewInt(0)
+	}
+	s.explicitFields.Or(s.explicitFields, field)
+}
+
+// SetName sets the Name field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxHook) SetName(name string) {
+	s.Name = name
+	s.require(sandboxHookFieldName)
+}
+
+// SetEvent sets the Event field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxHook) SetEvent(event *string) {
+	s.Event = event
+	s.require(sandboxHookFieldEvent)
+}
+
+// SetCommand sets the Command field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxHook) SetCommand(command string) {
+	s.Command = command
+	s.require(sandboxHookFieldCommand)
+}
+
+// SetTimeout sets the Timeout field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxHook) SetTimeout(timeout *float64) {
+	s.Timeout = timeout
+	s.require(sandboxHookFieldTimeout)
+}
+
+// SetPriority sets the Priority field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxHook) SetPriority(priority *int) {
+	s.Priority = priority
+	s.require(sandboxHookFieldPriority)
+}
+
+// SetSource sets the Source field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (s *SandboxHook) SetSource(source *string) {
+	s.Source = source
+	s.require(sandboxHookFieldSource)
+}
+
+func (s *SandboxHook) UnmarshalJSON(data []byte) error {
+	type unmarshaler SandboxHook
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*s = SandboxHook(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *s)
+	if err != nil {
+		return err
+	}
+	s.extraProperties = extraProperties
+	s.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (s *SandboxHook) MarshalJSON() ([]byte, error) {
+	type embed SandboxHook
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*s),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, s.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (s *SandboxHook) String() string {
 	if len(s.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(s.rawJSON); err == nil {
 			return value

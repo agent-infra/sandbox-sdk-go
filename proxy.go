@@ -72,6 +72,42 @@ func (p *ProxyDiagnoseRequest) SetUrl(url string) {
 }
 
 var (
+	proxyUpstreamUpdateRequestFieldServer  = big.NewInt(1 << 0)
+	proxyUpstreamUpdateRequestFieldAuthCmd = big.NewInt(1 << 1)
+)
+
+type ProxyUpstreamUpdateRequest struct {
+	// Upstream proxy server. Supports plain host:port or user:pass@host:port
+	Server string `json:"server" url:"-"`
+	// Optional shell command to obtain proxy credentials. The command stdout should be "username:password". When set, the result is injected into the server URL, replacing any inline credentials.
+	AuthCmd *string `json:"auth_cmd,omitempty" url:"-"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+}
+
+func (p *ProxyUpstreamUpdateRequest) require(field *big.Int) {
+	if p.explicitFields == nil {
+		p.explicitFields = big.NewInt(0)
+	}
+	p.explicitFields.Or(p.explicitFields, field)
+}
+
+// SetServer sets the Server field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *ProxyUpstreamUpdateRequest) SetServer(server string) {
+	p.Server = server
+	p.require(proxyUpstreamUpdateRequestFieldServer)
+}
+
+// SetAuthCmd sets the AuthCmd field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *ProxyUpstreamUpdateRequest) SetAuthCmd(authCmd *string) {
+	p.AuthCmd = authCmd
+	p.require(proxyUpstreamUpdateRequestFieldAuthCmd)
+}
+
+var (
 	proxyBypassRequestFieldPattern = big.NewInt(1 << 0)
 )
 
@@ -293,6 +329,153 @@ func (p *ProxyDiagnoseResult) String() string {
 }
 
 var (
+	proxyHealthCheckFieldHealthy          = big.NewInt(1 << 0)
+	proxyHealthCheckFieldGostAlive        = big.NewInt(1 << 1)
+	proxyHealthCheckFieldNginxAlive       = big.NewInt(1 << 2)
+	proxyHealthCheckFieldConfigConsistent = big.NewInt(1 << 3)
+	proxyHealthCheckFieldInconsistencies  = big.NewInt(1 << 4)
+)
+
+type ProxyHealthCheck struct {
+	// Overall health status
+	Healthy bool `json:"healthy" url:"healthy"`
+	// GOST proxy process is reachable via API
+	GostAlive bool `json:"gost_alive" url:"gost_alive"`
+	// nginx process is running
+	NginxAlive bool `json:"nginx_alive" url:"nginx_alive"`
+	// Domain sets in proxy-map.json, gost-hosts.txt, and nginx conf are consistent
+	ConfigConsistent bool `json:"config_consistent" url:"config_consistent"`
+	// List of inconsistency details (empty when config_consistent is true)
+	Inconsistencies []string `json:"inconsistencies,omitempty" url:"inconsistencies,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (p *ProxyHealthCheck) GetHealthy() bool {
+	if p == nil {
+		return false
+	}
+	return p.Healthy
+}
+
+func (p *ProxyHealthCheck) GetGostAlive() bool {
+	if p == nil {
+		return false
+	}
+	return p.GostAlive
+}
+
+func (p *ProxyHealthCheck) GetNginxAlive() bool {
+	if p == nil {
+		return false
+	}
+	return p.NginxAlive
+}
+
+func (p *ProxyHealthCheck) GetConfigConsistent() bool {
+	if p == nil {
+		return false
+	}
+	return p.ConfigConsistent
+}
+
+func (p *ProxyHealthCheck) GetInconsistencies() []string {
+	if p == nil {
+		return nil
+	}
+	return p.Inconsistencies
+}
+
+func (p *ProxyHealthCheck) GetExtraProperties() map[string]interface{} {
+	return p.extraProperties
+}
+
+func (p *ProxyHealthCheck) require(field *big.Int) {
+	if p.explicitFields == nil {
+		p.explicitFields = big.NewInt(0)
+	}
+	p.explicitFields.Or(p.explicitFields, field)
+}
+
+// SetHealthy sets the Healthy field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *ProxyHealthCheck) SetHealthy(healthy bool) {
+	p.Healthy = healthy
+	p.require(proxyHealthCheckFieldHealthy)
+}
+
+// SetGostAlive sets the GostAlive field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *ProxyHealthCheck) SetGostAlive(gostAlive bool) {
+	p.GostAlive = gostAlive
+	p.require(proxyHealthCheckFieldGostAlive)
+}
+
+// SetNginxAlive sets the NginxAlive field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *ProxyHealthCheck) SetNginxAlive(nginxAlive bool) {
+	p.NginxAlive = nginxAlive
+	p.require(proxyHealthCheckFieldNginxAlive)
+}
+
+// SetConfigConsistent sets the ConfigConsistent field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *ProxyHealthCheck) SetConfigConsistent(configConsistent bool) {
+	p.ConfigConsistent = configConsistent
+	p.require(proxyHealthCheckFieldConfigConsistent)
+}
+
+// SetInconsistencies sets the Inconsistencies field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *ProxyHealthCheck) SetInconsistencies(inconsistencies []string) {
+	p.Inconsistencies = inconsistencies
+	p.require(proxyHealthCheckFieldInconsistencies)
+}
+
+func (p *ProxyHealthCheck) UnmarshalJSON(data []byte) error {
+	type unmarshaler ProxyHealthCheck
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*p = ProxyHealthCheck(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *p)
+	if err != nil {
+		return err
+	}
+	p.extraProperties = extraProperties
+	p.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (p *ProxyHealthCheck) MarshalJSON() ([]byte, error) {
+	type embed ProxyHealthCheck
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*p),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, p.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (p *ProxyHealthCheck) String() string {
+	if len(p.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(p.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(p); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", p)
+}
+
+var (
 	proxyMappingRouteFieldSource       = big.NewInt(1 << 0)
 	proxyMappingRouteFieldTarget       = big.NewInt(1 << 1)
 	proxyMappingRouteFieldSourceHost   = big.NewInt(1 << 2)
@@ -428,6 +611,119 @@ func (p *ProxyMappingRoute) MarshalJSON() ([]byte, error) {
 }
 
 func (p *ProxyMappingRoute) String() string {
+	if len(p.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(p.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(p); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", p)
+}
+
+var (
+	proxyUpstreamInfoFieldAddr     = big.NewInt(1 << 0)
+	proxyUpstreamInfoFieldUsername = big.NewInt(1 << 1)
+	proxyUpstreamInfoFieldPassword = big.NewInt(1 << 2)
+)
+
+type ProxyUpstreamInfo struct {
+	// Upstream proxy address (host:port)
+	Addr string `json:"addr" url:"addr"`
+	// Proxy auth username (if authenticated)
+	Username *string `json:"username,omitempty" url:"username,omitempty"`
+	// Proxy auth password (if authenticated)
+	Password *string `json:"password,omitempty" url:"password,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (p *ProxyUpstreamInfo) GetAddr() string {
+	if p == nil {
+		return ""
+	}
+	return p.Addr
+}
+
+func (p *ProxyUpstreamInfo) GetUsername() *string {
+	if p == nil {
+		return nil
+	}
+	return p.Username
+}
+
+func (p *ProxyUpstreamInfo) GetPassword() *string {
+	if p == nil {
+		return nil
+	}
+	return p.Password
+}
+
+func (p *ProxyUpstreamInfo) GetExtraProperties() map[string]interface{} {
+	return p.extraProperties
+}
+
+func (p *ProxyUpstreamInfo) require(field *big.Int) {
+	if p.explicitFields == nil {
+		p.explicitFields = big.NewInt(0)
+	}
+	p.explicitFields.Or(p.explicitFields, field)
+}
+
+// SetAddr sets the Addr field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *ProxyUpstreamInfo) SetAddr(addr string) {
+	p.Addr = addr
+	p.require(proxyUpstreamInfoFieldAddr)
+}
+
+// SetUsername sets the Username field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *ProxyUpstreamInfo) SetUsername(username *string) {
+	p.Username = username
+	p.require(proxyUpstreamInfoFieldUsername)
+}
+
+// SetPassword sets the Password field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (p *ProxyUpstreamInfo) SetPassword(password *string) {
+	p.Password = password
+	p.require(proxyUpstreamInfoFieldPassword)
+}
+
+func (p *ProxyUpstreamInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler ProxyUpstreamInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*p = ProxyUpstreamInfo(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *p)
+	if err != nil {
+		return err
+	}
+	p.extraProperties = extraProperties
+	p.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (p *ProxyUpstreamInfo) MarshalJSON() ([]byte, error) {
+	type embed ProxyUpstreamInfo
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*p),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, p.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (p *ProxyUpstreamInfo) String() string {
 	if len(p.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(p.rawJSON); err == nil {
 			return value
@@ -700,6 +996,136 @@ func (r *ResponseProxyDiagnoseResult) String() string {
 }
 
 var (
+	responseProxyHealthCheckFieldSuccess = big.NewInt(1 << 0)
+	responseProxyHealthCheckFieldMessage = big.NewInt(1 << 1)
+	responseProxyHealthCheckFieldData    = big.NewInt(1 << 2)
+	responseProxyHealthCheckFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseProxyHealthCheck struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *ProxyHealthCheck `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseProxyHealthCheck) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseProxyHealthCheck) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseProxyHealthCheck) GetData() *ProxyHealthCheck {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseProxyHealthCheck) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseProxyHealthCheck) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseProxyHealthCheck) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseProxyHealthCheck) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseProxyHealthCheckFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseProxyHealthCheck) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseProxyHealthCheckFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseProxyHealthCheck) SetData(data *ProxyHealthCheck) {
+	r.Data = data
+	r.require(responseProxyHealthCheckFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseProxyHealthCheck) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseProxyHealthCheckFieldHint)
+}
+
+func (r *ResponseProxyHealthCheck) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseProxyHealthCheck
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseProxyHealthCheck(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseProxyHealthCheck) MarshalJSON() ([]byte, error) {
+	type embed ResponseProxyHealthCheck
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseProxyHealthCheck) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
 	responseProxyMappingRouteFieldSuccess = big.NewInt(1 << 0)
 	responseProxyMappingRouteFieldMessage = big.NewInt(1 << 1)
 	responseProxyMappingRouteFieldData    = big.NewInt(1 << 2)
@@ -818,6 +1244,266 @@ func (r *ResponseProxyMappingRoute) MarshalJSON() ([]byte, error) {
 }
 
 func (r *ResponseProxyMappingRoute) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseProxyUpstreamInfoFieldSuccess = big.NewInt(1 << 0)
+	responseProxyUpstreamInfoFieldMessage = big.NewInt(1 << 1)
+	responseProxyUpstreamInfoFieldData    = big.NewInt(1 << 2)
+	responseProxyUpstreamInfoFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseProxyUpstreamInfo struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *ProxyUpstreamInfo `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseProxyUpstreamInfo) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseProxyUpstreamInfo) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseProxyUpstreamInfo) GetData() *ProxyUpstreamInfo {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseProxyUpstreamInfo) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseProxyUpstreamInfo) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseProxyUpstreamInfo) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseProxyUpstreamInfo) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseProxyUpstreamInfoFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseProxyUpstreamInfo) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseProxyUpstreamInfoFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseProxyUpstreamInfo) SetData(data *ProxyUpstreamInfo) {
+	r.Data = data
+	r.require(responseProxyUpstreamInfoFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseProxyUpstreamInfo) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseProxyUpstreamInfoFieldHint)
+}
+
+func (r *ResponseProxyUpstreamInfo) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseProxyUpstreamInfo
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseProxyUpstreamInfo(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseProxyUpstreamInfo) MarshalJSON() ([]byte, error) {
+	type embed ResponseProxyUpstreamInfo
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseProxyUpstreamInfo) String() string {
+	if len(r.rawJSON) > 0 {
+		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
+			return value
+		}
+	}
+	if value, err := internal.StringifyJSON(r); err == nil {
+		return value
+	}
+	return fmt.Sprintf("%#v", r)
+}
+
+var (
+	responseUnionProxyUpstreamInfoNoneTypeFieldSuccess = big.NewInt(1 << 0)
+	responseUnionProxyUpstreamInfoNoneTypeFieldMessage = big.NewInt(1 << 1)
+	responseUnionProxyUpstreamInfoNoneTypeFieldData    = big.NewInt(1 << 2)
+	responseUnionProxyUpstreamInfoNoneTypeFieldHint    = big.NewInt(1 << 3)
+)
+
+type ResponseUnionProxyUpstreamInfoNoneType struct {
+	// Whether the operation was successful
+	Success *bool `json:"success,omitempty" url:"success,omitempty"`
+	// Operation result message
+	Message *string `json:"message,omitempty" url:"message,omitempty"`
+	// Data returned from the operation
+	Data *ProxyUpstreamInfo `json:"data,omitempty" url:"data,omitempty"`
+	// Context hint for AI agents (e.g. tab changes)
+	Hint *string `json:"hint,omitempty" url:"hint,omitempty"`
+
+	// Private bitmask of fields set to an explicit value and therefore not to be omitted
+	explicitFields *big.Int `json:"-" url:"-"`
+
+	extraProperties map[string]interface{}
+	rawJSON         json.RawMessage
+}
+
+func (r *ResponseUnionProxyUpstreamInfoNoneType) GetSuccess() *bool {
+	if r == nil {
+		return nil
+	}
+	return r.Success
+}
+
+func (r *ResponseUnionProxyUpstreamInfoNoneType) GetMessage() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Message
+}
+
+func (r *ResponseUnionProxyUpstreamInfoNoneType) GetData() *ProxyUpstreamInfo {
+	if r == nil {
+		return nil
+	}
+	return r.Data
+}
+
+func (r *ResponseUnionProxyUpstreamInfoNoneType) GetHint() *string {
+	if r == nil {
+		return nil
+	}
+	return r.Hint
+}
+
+func (r *ResponseUnionProxyUpstreamInfoNoneType) GetExtraProperties() map[string]interface{} {
+	return r.extraProperties
+}
+
+func (r *ResponseUnionProxyUpstreamInfoNoneType) require(field *big.Int) {
+	if r.explicitFields == nil {
+		r.explicitFields = big.NewInt(0)
+	}
+	r.explicitFields.Or(r.explicitFields, field)
+}
+
+// SetSuccess sets the Success field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseUnionProxyUpstreamInfoNoneType) SetSuccess(success *bool) {
+	r.Success = success
+	r.require(responseUnionProxyUpstreamInfoNoneTypeFieldSuccess)
+}
+
+// SetMessage sets the Message field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseUnionProxyUpstreamInfoNoneType) SetMessage(message *string) {
+	r.Message = message
+	r.require(responseUnionProxyUpstreamInfoNoneTypeFieldMessage)
+}
+
+// SetData sets the Data field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseUnionProxyUpstreamInfoNoneType) SetData(data *ProxyUpstreamInfo) {
+	r.Data = data
+	r.require(responseUnionProxyUpstreamInfoNoneTypeFieldData)
+}
+
+// SetHint sets the Hint field and marks it as non-optional;
+// this prevents an empty or null value for this field from being omitted during serialization.
+func (r *ResponseUnionProxyUpstreamInfoNoneType) SetHint(hint *string) {
+	r.Hint = hint
+	r.require(responseUnionProxyUpstreamInfoNoneTypeFieldHint)
+}
+
+func (r *ResponseUnionProxyUpstreamInfoNoneType) UnmarshalJSON(data []byte) error {
+	type unmarshaler ResponseUnionProxyUpstreamInfoNoneType
+	var value unmarshaler
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	*r = ResponseUnionProxyUpstreamInfoNoneType(value)
+	extraProperties, err := internal.ExtractExtraProperties(data, *r)
+	if err != nil {
+		return err
+	}
+	r.extraProperties = extraProperties
+	r.rawJSON = json.RawMessage(data)
+	return nil
+}
+
+func (r *ResponseUnionProxyUpstreamInfoNoneType) MarshalJSON() ([]byte, error) {
+	type embed ResponseUnionProxyUpstreamInfoNoneType
+	var marshaler = struct {
+		embed
+	}{
+		embed: embed(*r),
+	}
+	explicitMarshaler := internal.HandleExplicitFields(marshaler, r.explicitFields)
+	return json.Marshal(explicitMarshaler)
+}
+
+func (r *ResponseUnionProxyUpstreamInfoNoneType) String() string {
 	if len(r.rawJSON) > 0 {
 		if value, err := internal.StringifyJSON(r.rawJSON); err == nil {
 			return value

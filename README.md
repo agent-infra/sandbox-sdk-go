@@ -37,9 +37,10 @@ import (
 
 func do() {
     client := client.NewClient()
-    client.Shell.ExecCommand(
+    client.Sandbox.RegisterHook(
         context.TODO(),
-        &sandboxsdkgo.ShellExecRequest{
+        &sandboxsdkgo.RegisterHookRequest{
+            Name: "name",
             Command: "command",
         },
     )
@@ -63,7 +64,7 @@ Structured error types are returned from API calls that return non-success statu
 with the `errors.Is` and `errors.As` APIs, so you can access the error like so:
 
 ```go
-response, err := client.Shell.ExecCommand(...)
+response, err := client.Sandbox.RegisterHook(...)
 if err != nil {
     var apiError *core.APIError
     if errors.As(err, apiError) {
@@ -97,7 +98,7 @@ client := client.NewClient(
 )
 
 // Specify options for an individual request.
-response, err := client.Shell.ExecCommand(
+response, err := client.Sandbox.RegisterHook(
     ...,
     option.WithToken("<YOUR_API_KEY>"),
 )
@@ -111,7 +112,7 @@ You can access the raw HTTP response data by using the `WithRawResponse` field o
 when you need to examine the response headers received from the API call.
 
 ```go
-response, err := client.Shell.WithRawResponse.ExecCommand(...)
+response, err := client.Sandbox.WithRawResponse.RegisterHook(...)
 if err != nil {
     return err
 }
@@ -140,7 +141,7 @@ client := client.NewClient(
     option.WithMaxAttempts(1),
 )
 
-response, err := client.Shell.ExecCommand(
+response, err := client.Sandbox.RegisterHook(
     ...,
     option.WithMaxAttempts(1),
 )
@@ -154,7 +155,7 @@ Setting a timeout for each individual request is as simple as using the standard
 ctx, cancel := context.WithTimeout(ctx, time.Second)
 defer cancel()
 
-response, err := client.Shell.ExecCommand(ctx, ...)
+response, err := client.Sandbox.RegisterHook(ctx, ...)
 ```
 
 ### Explicit Null
@@ -176,7 +177,7 @@ type ExampleRequest struct {
 request := &ExampleRequest{}
 request.SetName(nil)
 
-response, err := client.Shell.ExecCommand(ctx, request, ...)
+response, err := client.Sandbox.RegisterHook(ctx, request, ...)
 ```
 
 ## Contributing
